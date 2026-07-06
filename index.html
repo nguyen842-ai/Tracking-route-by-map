@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Theo Dõi Đi Tuyến Nhân Viên - Bản Rút Gọn Tối Ưu</title>
+    <title>Theo Dõi Đi Tuyến Nhân Viên</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -84,7 +84,6 @@
         tfoot { background-color: #e2e8f0; font-weight: bold; }
         .num-right { text-align: right; }
 
-        /* Vòng tròn Marker trên Map */
         .route-marker {
             border-radius: 50%; color: white; font-weight: bold;
             display: flex; align-items: center; justify-content: center;
@@ -206,18 +205,19 @@
 </div>
 
 <script>
-    // Cấu hình vị trí cột (Chuẩn đếm từ 0)
+    // Cột của File 1 (Ghé thăm) - Các cột này đã ổn định
     const COL = {
         NPP: 2, NV: 6, THU: 11, STT_GHE: 12, LO_TRINH: 13, MA_KH: 14, TEN_KH: 15,
         TIME_IN: 19, TIME_OUT: 20, TIME_TOTAL: 21, 
-        DS_DON_HANG: 22, // Cột W (Báo cáo chi tiết ghé thăm)
+        DS_DON_HANG: 22, // Cột W chứa mã PO
         LAT: 30, LNG: 31
     };
     
-    const COL_EX2 = {
-        MA_DON_HANG: 16,  // Cột Q (Báo cáo chi tiết đơn hàng)
-        NGANH_HANG: 39,   // Cột AN 
-        DOANH_SO: 34      // Cột AI 
+    // Khởi tạo vị trí mặc định cho File 2, sẽ được máy tính TỰ ĐỘNG GHI ĐÈ
+    let COL_EX2 = {
+        MA_DON_HANG: 16, 
+        NGANH_HANG: 39,  
+        DOANH_SO: 34     
     };
 
     const colorMap = {
@@ -239,7 +239,7 @@
     const avatarImg = document.getElementById('avatar-img');
     const dashboard = document.getElementById('dashboard-section');
 
-    /* ================= ĐỌC FILE EXCEL ================= */
+    /* ================= ĐỌC FILE VÀ NHẬN DIỆN CỘT TỰ ĐỘNG ================= */
     document.getElementById('fileRoute').addEventListener('change', (e) => handleExcel(e, 1));
     document.getElementById('fileOrder').addEventListener('change', (e) => handleExcel(e, 2));
 
@@ -257,8 +257,35 @@
                 updateFilters();
             } else {
                 rawOrderData = jsonData; 
+                
+                // MẮT THẦN: Dò 20 dòng đầu tiên để tự động tìm Cột
+                let colPO = -1, colCat = -1, colSales = -1;
+                for (let i = 0; i < Math.min(20, rawOrderData.length); i++) {
+                    let row = rawOrderData[i];
+                    if(!row) continue;
+                    for (let j = 0; j < row.length; j++) {
+                        let cellVal = String(row[j] || '').trim().toLowerCase();
+                        if (cellVal.includes('MÃ ĐƠN ĐẶT HÀNG')) colPO = j;
+                        if (cellVal.includes('NGÀNH HÀNG')) colCat = j;
+                        if (cellVal.includes('CHƯA VAT') || cellVal.includes('doanh số')) colSales = j;
+                    }
+                }
+
+                // Ghi đè cấu hình nếu tìm thấy
+                if (colPO !== -1) COL_EX2.MA_DON_HANG = colPO;
+                if (colCat !== -1) COL_EX2.NGANH_HANG = colCat;
+                if (colSales !== -1) COL_EX2.DOANH_SO = colSales;
+
+                console.log(`Đã Auto-detect: Mã ĐH ở cột ${colPO}, Ngành hàng ở cột ${colCat}, Thành tiền ở cột ${colSales}`);
+
+                // Lọc danh sách Ngành hàng an toàn
                 let cats = rawOrderData.map(row => row[COL_EX2.NGANH_HANG]).filter(Boolean);
-                categoryList = [...new Set(cats)].filter(c => c !== "Ngành hàng" && c !== "NGANH_HANG" && c !== "Category");
+                categoryList = [...new Set(cats)].filter(c => {
+                    let strC = String(c).toLowerCase();
+                    return !strC.includes("ngành hàng") && !strC.includes("category");
+                });
+                
+                if(categoryList.length === 0) alert("Cảnh báo: Không thể nhận diện được các cột ngành hàng. File Excel đơn hàng có thể bị lỗi định dạng!");
                 
                 if(selDay.value) processDataAndRender();
             }
@@ -304,7 +331,7 @@
 
     selDay.addEventListener('change', processDataAndRender);
 
-    /* ================= LOGIC CHÍNH ================= */
+    /* ================= TÍNH TOÁN & VẼ ================= */
     function processDataAndRender() {
         const nv = selNV.value;
         const npp = selNPP.value;
@@ -351,24 +378,18 @@
         }
     }
 
-    /* --- TÍNH TOÁN KPI --- */
     function calculateKPIs(data) {
         let firstR = data[0]; 
         let lastR = data[data.length - 1];
 
-        let checkIn = firstR[COL.TIME_IN] || '00:00:00';
-        let checkOut = lastR[COL.TIME_OUT] || '00:00:00';
-        document.getElementById('kpi-checkin').innerText = checkIn;
-        document.getElementById('kpi-checkout').innerText = checkOut;
+        document.getElementById('kpi-checkin').innerText = firstR[COL.TIME_IN] || '00:00:00';
+        document.getElementById('kpi-checkout').innerText = lastR[COL.TIME_OUT] || '00:00:00';
 
-        let workMins = timeStrToMinutes(checkOut) - timeStrToMinutes(checkIn);
+        let workMins = timeStrToMinutes(lastR[COL.TIME_OUT]) - timeStrToMinutes(firstR[COL.TIME_IN]);
         document.getElementById('kpi-totaltime').innerText = minutesToStr(Math.max(0, workMins));
 
         let totalVisited = data.length;
-        let inRouteCount = 0;
-        let outRouteCount = 0;
-        let khTimeMins = 0;
-        let orderedKhCount = 0; 
+        let inRouteCount = 0, outRouteCount = 0, khTimeMins = 0, orderedKhCount = 0; 
 
         data.forEach(r => {
             let loTrinh = (r[COL.LO_TRINH] || '').toString().toLowerCase();
@@ -377,8 +398,8 @@
             
             khTimeMins += timeStrToMinutes(r[COL.TIME_TOTAL]);
 
-            // LOGIC KPI MỚI: Đếm số khách hàng lên đơn dựa trên việc xuất hiện 'PO' ở cột W
-            let dsDonHangStr = (r[COL.DS_DON_HANG] || '').toString().trim();
+            // KIỂM TRA CHỮ PO BẰNG ÉP KIỂU STRING & UPPERCASE
+            let dsDonHangStr = String(r[COL.DS_DON_HANG] || '').toUpperCase().trim();
             if(dsDonHangStr.includes('PO')) {
                 orderedKhCount++; 
             }
@@ -387,7 +408,7 @@
         document.getElementById('kpi-total-visited').innerText = totalVisited;
         document.getElementById('sub-in-route').innerText = inRouteCount;
         document.getElementById('sub-out-route').innerText = outRouteCount;
-        document.getElementById('kpi-ordered-kh').innerText = orderedKhCount; // Số KH lên đơn
+        document.getElementById('kpi-ordered-kh').innerText = orderedKhCount;
         document.getElementById('kpi-working-kh').innerText = minutesToStr(khTimeMins);
 
         let totalDist = 0;
@@ -398,7 +419,6 @@
         document.getElementById('kpi-moving-time').innerText = minutesToStr((totalDist / 35) * 60);
     }
 
-    /* --- BẢNG CHI TIẾT --- */
     function renderDetailTable(data) {
         const thead = document.getElementById('table-head-row');
         const tbody = document.getElementById('table-body');
@@ -437,19 +457,22 @@
 
             let salesByCat = new Array(categoryList.length).fill(0);
             
-            // LOGIC DOANH SỐ: Lấy chuỗi từ Cột W (Chứa PO) và dò tìm với Cột Q (Báo cáo đơn hàng)
-            let dsDonHangStr = (row[COL.DS_DON_HANG] || '').toString().trim();
+            // XỬ LÝ SẠCH CHUỖI PO ĐỂ KHỚP 100%
+            let dsDonHangStr = String(row[COL.DS_DON_HANG] || '').toUpperCase().trim();
+            
             if(dsDonHangStr.includes('PO') && rawOrderData.length > 0) {
-                // Tách các mã PO ra nếu trong ô có nhiều PO ngăn cách bởi dấu phẩy
-                let listPO = dsDonHangStr.split(',').map(s => s.trim()); 
+                // Tách PO bằng mọi loại ngắt dòng, dấu phẩy, dấu chấm phẩy
+                let listPO = dsDonHangStr.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean); 
                 
                 listPO.forEach(po => {
-                    // Match mã PO với Cột Q trong file số 2
-                    let orderRows = rawOrderData.filter(or => String(or[COL_EX2.MA_DON_HANG]).trim() === po);
+                    // Đối soát mã PO 2 bên (Ép kiểu viết hoa, cắt khoảng trắng để triệt tiêu lỗi mắt thường)
+                    let orderRows = rawOrderData.filter(or => String(or[COL_EX2.MA_DON_HANG]).toUpperCase().trim() === po);
                     orderRows.forEach(or => {
                         let catIdx = categoryList.indexOf(or[COL_EX2.NGANH_HANG]);
                         if(catIdx >= 0) {
-                            let val = parseFloat(or[COL_EX2.DOANH_SO]) || 0;
+                            // Ép kiểu số, lọc bỏ cả dấu phẩy phòng trường hợp số tiền bị dính text
+                            let valStr = String(or[COL_EX2.DOANH_SO]).replace(/,/g, '');
+                            let val = parseFloat(valStr) || 0;
                             salesByCat[catIdx] += val;
                             catTotals[catIdx] += val;
                         }
