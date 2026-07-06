@@ -294,42 +294,65 @@
         reader.readAsArrayBuffer(file);
     }
 
-    /* ================= 3. XỬ LÝ BỘ LỌC ================= */
+   /* ================= 3. XỬ LÝ BỘ LỌC (LOGIC MỚI: NPP -> NV -> THỨ/TUẦN) ================= */
     function updateFilters() {
-        let nvs = [...new Set(rawRouteData.map(r => r[COL.NV]))].filter(Boolean);
+        // 1. Tải file xong -> Lấy danh sách NPP đầu tiên
+        let npps = [...new Set(rawRouteData.map(r => r[COL.NPP]))].filter(Boolean);
+        selNPP.innerHTML = '<option value="">-- Chọn NPP --</option>';
+        npps.forEach(npp => selNPP.innerHTML += `<option value="${npp}">${npp}</option>`);
+        selNPP.disabled = false;
+        
+        // Đặt lại các ô khác
+        selNV.innerHTML = '<option value="">-- Chọn Nhân viên --</option>'; selNV.disabled = true;
+        selWeek.innerHTML = '<option value="">-- Chọn Tuần --</option>'; selWeek.disabled = true;
+        selDay.innerHTML = '<option value="">-- Chọn Thứ --</option>'; selDay.disabled = true;
+    }
+
+    // 2. Chọn NPP -> Lọc ra danh sách Nhân viên thuộc NPP đó
+    selNPP.addEventListener('change', () => {
+        const npp = selNPP.value;
+        if (!npp) { resetDashboard(); return; }
+        
+        let nvs = [...new Set(rawRouteData.filter(r => r[COL.NPP] === npp).map(r => r[COL.NV]))].filter(Boolean);
         selNV.innerHTML = '<option value="">-- Chọn Nhân viên --</option>';
         nvs.forEach(nv => selNV.innerHTML += `<option value="${nv}">${nv}</option>`);
         selNV.disabled = false;
-    }
+        
+        // Đặt lại Thứ & Tuần
+        selWeek.innerHTML = '<option value="">-- Chọn Tuần --</option>'; selWeek.disabled = true;
+        selDay.innerHTML = '<option value="">-- Chọn Thứ --</option>'; selDay.disabled = true;
+    });
 
+    // 3. Chọn Nhân viên -> Gọi Avatar và Mở khóa chọn Thứ & Tuần
     selNV.addEventListener('change', () => {
         const nv = selNV.value;
-        if (!nv) return resetDashboard();
+        const npp = selNPP.value;
+        if (!nv) { resetDashboard(); return; }
         
         // Cập nhật Avatar
         avatarImg.src = `assets/images/nhanvien/${nv}.PNG`;
 
-        let npps = [...new Set(rawRouteData.filter(r => r[COL.NV] === nv).map(r => r[COL.NPP]))].filter(Boolean);
-        selNPP.innerHTML = '<option value="">-- Chọn NPP --</option>';
-        npps.forEach(npp => selNPP.innerHTML += `<option value="${npp}">${npp}</option>`);
-        selNPP.disabled = false;
-        selNPP.value = npps[0] || ''; // Auto select
-        selNPP.dispatchEvent(new Event('change'));
-    });
+        // Lấy danh sách "Thứ" từ file Excel dựa trên NPP và NV đã chọn
+        let thus = [...new Set(rawRouteData.filter(r => r[COL.NPP] === npp && r[COL.NV] === nv).map(r => r[COL.THU]))].filter(Boolean);
+        thus.sort((a, b) => a.localeCompare(b));
+        
+        selDay.innerHTML = '<option value="">-- Chọn Thứ --</option>';
+        thus.forEach(thu => selDay.innerHTML += `<option value="${thu}">${thu}</option>`);
+        selDay.disabled = false;
 
-    selNPP.addEventListener('change', () => {
-        // Mock Weeks cho phép chọn (Trong thực tế bạn lấy week từ DB hoặc Excel)
+        // Bật ô chọn Tuần (Dùng để dò DB Master & Sales)
         selWeek.innerHTML = '<option value="">-- Chọn Tuần --</option><option value="W1">Week 1</option><option value="W2">Week 2</option><option value="W3">Week 3</option><option value="W4">Week 4</option>';
         selWeek.disabled = false;
     });
 
+    // 4. Trigger chạy Dashboard: Cần phải chọn CẢ Tuần VÀ Thứ thì hệ thống mới xuất dữ liệu
+    selDay.addEventListener('change', () => {
+        if(!selWeek.value) alert("Vui lòng chọn thêm Tuần để đối chiếu với Database Master!");
+        else processDataAndRender();
+    });
+    
     selWeek.addEventListener('change', () => {
-        const nv = selNV.value;
-        let thus = [...new Set(rawRouteData.filter(r => r[COL.NV] === nv).map(r => r[COL.THU]))].filter(Boolean);
-        thus.sort((a, b) => a.localeCompare(b));
-        selDay.innerHTML = '<option value="">-- Chọn Thứ --</option>';
-        thus.forEach(thu => selDay.innerHTML += `<option value="${thu}">${thu}</option>`);
-        selDay.disabled = false;
+        if(selDay.value) processDataAndRender();
     });
 
     selDay.addEventListener('change', processDataAndRender);
