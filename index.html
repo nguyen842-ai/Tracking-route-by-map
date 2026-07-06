@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Theo Dõi Tuyến Nhân Viên</title>
+    <title>Theo Dõi Đi Tuyến Nhân Viên - Master Dashboard</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -30,9 +30,15 @@
         #upload-section {
             padding: 15px; background: #e2e8f0; border-bottom: 2px solid #cbd5e1;
         }
+        .upload-warning {
+            color: #dc2626; font-weight: bold; font-size: 13px;
+            background: #fee2e2; border: 1px solid #fca5a5;
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 12px;
+        }
         .file-upload-box { margin-bottom: 10px; }
-        .file-upload-box label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 14px; }
-        .file-upload-box input { width: 100%; padding: 5px; font-size: 14px;}
+        .file-upload-box label { font-weight: bold; display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
+        .file-upload-box input { width: 100%; padding: 5px; font-size: 13px;}
+        .status-badge { font-weight: normal; font-size: 12px; }
         
         #map { flex-grow: 1; width: 100%; background: #e2e8f0; z-index: 1; }
         
@@ -76,11 +82,16 @@
         .kpi-value { font-size: 18px; color: #0f172a; font-weight: bold; }
         .kpi-sub { font-size: 11px; color: #64748b; margin-top: 5px; border-top: 1px dashed #cbd5e1; padding-top: 5px; }
 
-        /* Bảng Chi Tiết */
+        /* Bảng Chi Tiết Định Dạng Màu Header */
         .data-table-container { overflow-x: auto; max-width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; font-size: 13px; }
-        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background-color: #f1f5f9; font-weight: bold; position: sticky; top: 0; white-space: nowrap; }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; font-size: 13px; }
+        th, td { padding: 8px 10px; text-align: left; border: 1px solid #e2e8f0; }
+        
+        /* Thống nhất bôi màu Header theo khu vực */
+        th.route-th { background-color: #1e40af !important; color: white !important; font-weight: bold; text-align: center; vertical-align: middle; }
+        th.sales-th { background-color: #16a34a !important; color: white !important; font-weight: bold; text-align: center; vertical-align: middle; }
+        
+        th { position: sticky; top: 0; white-space: nowrap; }
         tfoot { background-color: #e2e8f0; font-weight: bold; }
         .num-right { text-align: right; }
 
@@ -90,159 +101,6 @@
             width: 26px; height: 26px; border: 2px solid white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.4); font-size: 12px;
         }
-
-        /* ========== TOAST NOTIFICATION STYLES ========== */
-        #toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: none;
-        }
-
-        .toast {
-            padding: 14px 18px;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            font-size: 14px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 320px;
-            max-width: 450px;
-            animation: slideIn 0.3s ease-out;
-            pointer-events: auto;
-            cursor: pointer;
-        }
-
-        .toast.success {
-            background-color: #10b981;
-            color: white;
-            border-left: 4px solid #059669;
-        }
-
-        .toast.error {
-            background-color: #ef4444;
-            color: white;
-            border-left: 4px solid #dc2626;
-        }
-
-        .toast.info {
-            background-color: #3b82f6;
-            color: white;
-            border-left: 4px solid #2563eb;
-        }
-
-        .toast.warning {
-            background-color: #f59e0b;
-            color: white;
-            border-left: 4px solid #d97706;
-        }
-
-        .toast.loading {
-            background-color: #6b7280;
-            color: white;
-            border-left: 4px solid #4b5563;
-        }
-
-        .toast-icon {
-            font-size: 18px;
-            flex-shrink: 0;
-        }
-
-        .toast-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .toast-title {
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-
-        .toast-message {
-            font-size: 13px;
-            opacity: 0.95;
-        }
-
-        .toast-close {
-            flex-shrink: 0;
-            cursor: pointer;
-            font-size: 18px;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-            padding: 0 5px;
-        }
-
-        .toast-close:hover {
-            opacity: 1;
-        }
-
-        .toast-progress {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            height: 3px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 0 0 6px 0;
-            animation: progress linear;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-        }
-
-        @keyframes progress {
-            from {
-                width: 100%;
-            }
-            to {
-                width: 0;
-            }
-        }
-
-        .toast.removing {
-            animation: slideOut 0.3s ease-in forwards;
-        }
-
-        /* Loading spinner */
-        .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top: 2px solid white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
     </style>
 </head>
 <body>
@@ -250,12 +108,23 @@
 <div id="app-container">
     <div id="left-panel">
         <div id="upload-section">
+            <div class="upload-warning">
+                ⚠️ Chú ý: Vui lòng đưa sheet raw data lên đầu tiên trước khi upload file.
+            </div>
+            
             <div class="file-upload-box">
-                <label>1. Tải lên: Báo cáo chi tiết ghé thăm</label>
+                <label>
+                    <span>1. Báo cáo chi tiết ghé thăm</span>
+                    <span id="statusRoute" class="status-badge" style="color:#64748b;">(Chưa có file)</span>
+                </label>
                 <input type="file" id="fileRoute" accept=".xlsx, .xls, .csv">
             </div>
+            
             <div class="file-upload-box">
-                <label>2. Tải lên: Báo cáo chi tiết đơn hàng</label>
+                <label>
+                    <span>2. Báo cáo chi tiết đơn hàng</span>
+                    <span id="statusOrder" class="status-badge" style="color:#64748b;">(Chưa có file)</span>
+                </label>
                 <input type="file" id="fileOrder" accept=".xlsx, .xls, .csv">
             </div>
         </div>
@@ -265,7 +134,7 @@
     <div id="right-panel">
         <div class="filter-header-section">
             <div id="avatar-container">
-                <img id="avatar-img" src="" alt="Avatar" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23cbd5e1\' stroke-width=\'2\'><path d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'></path><circle cx=\'12\' cy=\'7\' r=\'4\'></circle></svg>'">
+                <img id="avatar-img" src="" alt="Avatar" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23cbd5e1\' stroke-width=\'2\'><circle cx=\'12\' cy=\'8\' r=\'4\'/><path d=\'M18 21v-2a4 4 0 0 0-4-4H10a4 4 0 0 0-4 4v2\'/></svg>';">
             </div>
             <div class="filters-wrapper">
                 <div class="filter-row">
@@ -345,10 +214,8 @@
             <h3 style="margin-top: 20px;">📋 Chi Tiết Ghé Thăm & Doanh Số</h3>
             <div class="data-table-container">
                 <table id="detail-table">
-                    <thead>
-                        <tr id="table-head-row">
-                            </tr>
-                    </thead>
+                    <thead id="table-head">
+                        </thead>
                     <tbody id="table-body"></tbody>
                     <tfoot id="table-foot"></tfoot>
                 </table>
@@ -357,112 +224,15 @@
     </div>
 </div>
 
-<!-- Toast Container -->
-<div id="toast-container"></div>
-
 <script>
-    /* ================= TOAST NOTIFICATION SYSTEM ================= */
-    class ToastNotification {
-        constructor() {
-            this.container = document.getElementById('toast-container');
-            this.toasts = new Map();
-        }
-
-        show(options = {}) {
-            const {
-                type = 'info',
-                title = '',
-                message = '',
-                duration = 4000,
-                icon = '',
-                onClose = null
-            } = options;
-
-            const toastId = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            
-            const iconMap = {
-                success: '✓',
-                error: '✕',
-                info: 'ℹ',
-                warning: '⚠',
-                loading: '<div class="spinner"></div>'
-            };
-
-            const toastEl = document.createElement('div');
-            toastEl.className = `toast ${type}`;
-            toastEl.innerHTML = `
-                <div class="toast-icon">${icon || iconMap[type]}</div>
-                <div class="toast-content">
-                    ${title ? `<div class="toast-title">${title}</div>` : ''}
-                    <div class="toast-message">${message}</div>
-                </div>
-                <div class="toast-close">×</div>
-                ${duration > 0 ? `<div class="toast-progress" style="animation-duration: ${duration}ms;"></div>` : ''}
-            `;
-
-            const closeBtn = toastEl.querySelector('.toast-close');
-            closeBtn.addEventListener('click', () => this.remove(toastId));
-
-            toastEl.addEventListener('click', () => this.remove(toastId));
-
-            this.container.appendChild(toastEl);
-            this.toasts.set(toastId, { el: toastEl, onClose });
-
-            if (duration > 0) {
-                setTimeout(() => this.remove(toastId), duration);
-            }
-
-            return toastId;
-        }
-
-        remove(toastId) {
-            const toast = this.toasts.get(toastId);
-            if (!toast) return;
-
-            toast.el.classList.add('removing');
-            setTimeout(() => {
-                toast.el.remove();
-                this.toasts.delete(toastId);
-                if (toast.onClose) toast.onClose();
-            }, 300);
-        }
-
-        success(title, message, duration = 3000) {
-            return this.show({ type: 'success', title, message, duration });
-        }
-
-        error(title, message, duration = 5000) {
-            return this.show({ type: 'error', title, message, duration });
-        }
-
-        info(title, message, duration = 3000) {
-            return this.show({ type: 'info', title, message, duration });
-        }
-
-        warning(title, message, duration = 4000) {
-            return this.show({ type: 'warning', title, message, duration });
-        }
-
-        loading(title, message) {
-            return this.show({ type: 'loading', title, message, duration: 0 });
-        }
-    }
-
-    const toast = new ToastNotification();
-
-    /* ================= CẤUHINH CỘT ================= */
+    // Định vị cột cố định cho File 1
     const COL = {
         NPP: 2, NV: 6, THU: 11, STT_GHE: 12, LO_TRINH: 13, MA_KH: 14, TEN_KH: 15,
-        TIME_IN: 19, TIME_OUT: 20, TIME_TOTAL: 21, 
-        DS_DON_HANG: 22,
-        LAT: 30, LNG: 31
+        TIME_IN: 19, TIME_OUT: 20, TIME_TOTAL: 21, DS_DON_HANG: 22, LAT: 30, LNG: 31
     };
     
-    let COL_EX2 = {
-        MA_DON_HANG: 16, 
-        NGANH_HANG: 39,  
-        DOANH_SO: 34     
-    };
+    // Khởi tạo vị trí mặc định cho File 2 (Sẽ tự động quét đè)
+    let COL_EX2 = { MA_DON_HANG: 16, NGANH_HANG: 39, DOANH_SO: 34 };
 
     const colorMap = {
         'Thứ 2': '#22c55e', 'Thứ 3': '#ef4444', 'Thứ 4': '#a855f7',
@@ -471,8 +241,7 @@
 
     let rawRouteData = [];
     let rawOrderData = [];
-    let categoryList = [];
-    let fileLoadingState = { route: false, order: false };
+    let categoryList = []; 
 
     const map = L.map('map').setView([10.8231, 106.6297], 10);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
@@ -484,7 +253,7 @@
     const avatarImg = document.getElementById('avatar-img');
     const dashboard = document.getElementById('dashboard-section');
 
-    /* ================= ĐỌC FILE VÀ NHẬN DIỆN CỘT TỰ ĐỘNG ================= */
+    /* ================= XỬ LÝ FILE EXCEL & THÔNG BÁO LOADING ================= */
     document.getElementById('fileRoute').addEventListener('change', (e) => handleExcel(e, 1));
     document.getElementById('fileOrder').addEventListener('change', (e) => handleExcel(e, 2));
 
@@ -492,8 +261,9 @@
         const file = e.target.files[0];
         if (!file) return;
 
-        const fileName = file.name;
-        const loadingToastId = toast.loading(`Đang tải file ${fileName}...`, 'Vui lòng chờ');
+        // Bật cột Loading trạng thái đang xử lý
+        const statusEl = document.getElementById(type === 1 ? 'statusRoute' : 'statusOrder');
+        statusEl.innerHTML = "<span style='color:#ea580c; font-weight:bold;'>⌛ Đang xử lý...</span>";
 
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -501,37 +271,24 @@
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
                 const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
-
-                if(!jsonData || jsonData.length === 0) {
-                    throw new Error('File không chứa dữ liệu');
-                }
                 
                 if(type === 1) {
                     rawRouteData = jsonData.filter(row => row[COL.NPP] && row[COL.NV] && !isNaN(parseInt(row[0])));
-                    fileLoadingState.route = true;
-                    
-                    if(rawRouteData.length === 0) {
-                        throw new Error('Không tìm thấy dữ liệu hợp lệ trong file ghé thăm');
-                    }
-
-                    toast.remove(loadingToastId);
-                    toast.success('✅ Thành công', `Đã tải ${rawRouteData.length} bản ghi ghé thăm`, 3000);
                     updateFilters();
+                    statusEl.innerHTML = "<span style='color:#16a34a; font-weight:bold;'>✅ Đã tải xong</span>";
                 } else {
-                    rawOrderData = jsonData;
-                    fileLoadingState.order = true;
+                    rawOrderData = jsonData; 
                     
+                    // Mắt thần quét tìm cột
                     let colPO = -1, colCat = -1, colSales = -1;
-                    
                     for (let i = 0; i < Math.min(100, rawOrderData.length); i++) {
                         let row = rawOrderData[i];
                         if(!row) continue;
                         for (let j = 0; j < row.length; j++) {
                             let cellVal = String(row[j] || '').toLowerCase().replace(/\s+/g, ' ').trim();
-                            
                             if (cellVal.includes('mã đơn hàng') || cellVal.includes('mã đh') || cellVal.includes('order') || cellVal === 'po') colPO = j;
-                            if (cellVal.includes('ngành hàng') || cellVal.includes('nhóm hàng') || cellVal.includes('loại hàng')) colCat = j;
-                            if (cellVal.includes('thành tiền') || cellVal.includes('doanh số') || cellVal.includes('doanh thu')) colSales = j;
+                            if (cellVal.includes('ngành hàng') || cellVal.includes('nhóm hàng') || cellVal.includes('loại hàng') || cellVal.includes('nganh hang') || cellVal.includes('category')) colCat = j;
+                            if (cellVal.includes('thành tiền') || cellVal.includes('doanh số') || cellVal.includes('doanh thu') || cellVal.includes('thanh tien')) colSales = j;
                         }
                     }
 
@@ -542,43 +299,27 @@
                     let cats = rawOrderData.map(row => row[COL_EX2.NGANH_HANG]).filter(Boolean);
                     categoryList = [...new Set(cats)].filter(c => {
                         let strC = String(c).toLowerCase().replace(/\s+/g, ' ').trim();
-                        return !strC.includes("ngành hàng") && !strC.includes("nhóm hàng") && !strC.includes("loại hàng");
+                        return !strC.includes("ngành hàng") && !strC.includes("nhóm hàng") && !strC.includes("loại hàng") && !strC.includes("category");
                     });
                     
-                    toast.remove(loadingToastId);
-
                     if(categoryList.length > 0) {
-                        toast.success(
-                            '✅ Nhận diện thành công',
-                            `Tìm thấy ${categoryList.length} ngành hàng • Mã ĐH: Cột ${COL_EX2.MA_DON_HANG + 1} • Doanh số: Cột ${COL_EX2.DOANH_SO + 1}`,
-                            3000
-                        );
+                        statusEl.innerHTML = `<span style='color:#16a34a; font-weight:bold;'>✅ Đã nạp (${categoryList.length} ngành)</span>`;
                     } else {
-                        toast.warning(
-                            '⚠️ Cảnh báo',
-                            `Không tìm thấy dữ liệu ngành hàng ở cột ${COL_EX2.NGANH_HANG + 1}. Vui lòng kiểm tra file`,
-                            5000
-                        );
+                        statusEl.innerHTML = "<span style='color:#dc2626; font-weight:bold;'>❌ Lỗi đọc ngành hàng</span>";
+                        alert("Không tìm thấy tiêu đề ngành hàng ở cột AN (Cột 40)!");
                     }
                     
                     if(selDay.value) processDataAndRender();
                 }
-            } catch (error) {
-                console.error('Excel processing error:', error);
-                toast.remove(loadingToastId);
-                toast.error('❌ Lỗi', `${error.message || 'Không thể đọc file Excel'}`, 5000);
+            } catch (err) {
+                statusEl.innerHTML = "<span style='color:#dc2626; font-weight:bold;'>❌ File lỗi</span>";
+                console.error(err);
             }
         };
-
-        reader.onerror = () => {
-            toast.remove(loadingToastId);
-            toast.error('❌ Lỗi đọc file', 'Vui lòng thử lại', 4000);
-        };
-
         reader.readAsArrayBuffer(file);
     }
 
-    /* ================= BỘ LỌC ================= */
+    /* ================= BỘ LỌC PHÂN CẤP SẠCH ================= */
     function updateFilters() {
         let npps = [...new Set(rawRouteData.map(r => r[COL.NPP]))].filter(Boolean);
         selNPP.innerHTML = '<option value="">-- Chọn NPP --</option>';
@@ -591,7 +332,6 @@
     selNPP.addEventListener('change', () => {
         const npp = selNPP.value;
         if (!npp) { resetDashboard(); return; }
-        
         let nvs = [...new Set(rawRouteData.filter(r => r[COL.NPP] === npp).map(r => r[COL.NV]))].filter(Boolean);
         selNV.innerHTML = '<option value="">-- Chọn Nhân viên --</option>';
         nvs.forEach(nv => selNV.innerHTML += `<option value="${nv}">${nv}</option>`);
@@ -603,12 +343,10 @@
         const nv = selNV.value;
         const npp = selNPP.value;
         if (!nv) { resetDashboard(); return; }
-        
         avatarImg.src = `assets/images/nhanvien/${nv}.PNG`;
 
         let thus = [...new Set(rawRouteData.filter(r => r[COL.NPP] === npp && r[COL.NV] === nv).map(r => r[COL.THU]))].filter(Boolean);
         thus.sort((a, b) => a.localeCompare(b));
-        
         selDay.innerHTML = '<option value="">-- Chọn Thứ --</option>';
         thus.forEach(thu => selDay.innerHTML += `<option value="${thu}">${thu}</option>`);
         selDay.disabled = false;
@@ -616,50 +354,26 @@
 
     selDay.addEventListener('change', processDataAndRender);
 
-    /* ================= TÍNH TOÁN & VẼ ================= */
+    /* ================= ĐỒNG BỘ VÀ TÍNH TOÁN DỮ LIỆU ================= */
     function processDataAndRender() {
-        const nv = selNV.value;
-        const npp = selNPP.value;
-        const day = selDay.value;
+        const nv = selNV.value; const npp = selNPP.value; const day = selDay.value;
         if (!nv || !npp || !day) return;
 
         let currentRoute = rawRouteData.filter(r => r[COL.NV] === nv && r[COL.NPP] === npp && r[COL.THU] === day);
         currentRoute.sort((a, b) => parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]));
 
-        if (currentRoute.length === 0) {
-            toast.warning('⚠️ Không tìm thấy', 'Lộ trình không tồn tại', 3000);
-            return;
-        }
+        if (currentRoute.length === 0) return alert("Không tìm thấy lộ trình phù hợp!");
 
-        const processingToastId = toast.loading('Đang xử lý dữ liệu...', 'Vui lòng chờ');
-        
-        setTimeout(() => {
-            try {
-                drawMap(currentRoute, day);
-                calculateKPIs(currentRoute);
-                renderDetailTable(currentRoute);
-                dashboard.style.display = 'block';
-                
-                toast.remove(processingToastId);
-                toast.success('✅ Hoàn tất', `Đã tải ${currentRoute.length} điểm ghé thăm`, 3000);
-            } catch (error) {
-                toast.remove(processingToastId);
-                toast.error('❌ Lỗi xử lý', error.message, 5000);
-                console.error(error);
-            }
-        }, 300);
+        drawMap(currentRoute, day);
+        calculateKPIs(currentRoute);
+        renderDetailTable(currentRoute);
+        dashboard.style.display = 'block';
     }
 
     function drawMap(data, day) {
-        routeLayer.clearLayers();
-        let latlngs = [];
-        let color = colorMap[day] || '#333';
-
+        routeLayer.clearLayers(); let latlngs = []; let color = colorMap[day] || '#333';
         data.forEach((row) => {
-            let lat = parseFloat(row[COL.LAT]);
-            let lng = parseFloat(row[COL.LNG]);
-            let stt = row[COL.STT_GHE];
-            
+            let lat = parseFloat(row[COL.LAT]); let lng = parseFloat(row[COL.LNG]); let stt = row[COL.STT_GHE];
             if (lat && lng) {
                 latlngs.push([lat, lng]);
                 let icon = L.divIcon({
@@ -668,11 +382,10 @@
                     iconSize: [26, 26], iconAnchor: [13, 13]
                 });
                 let marker = L.marker([lat, lng], {icon: icon});
-                marker.bindPopup(`<b>${row[COL.TEN_KH] || 'N/A'}</b><br>STT ghé: ${stt}<br>Giờ vào: ${row[COL.TIME_IN] || 'N/A'}`);
+                marker.bindPopup(`<b>${row[COL.TEN_KH] || 'N/A'}</b><br>STT: ${stt}<br>Giờ vào: ${row[COL.TIME_IN] || 'N/A'}`);
                 routeLayer.addLayer(marker);
             }
         });
-
         if (latlngs.length > 1) {
             let polyline = L.polyline(latlngs, {color: color, weight: 3, opacity: 0.7, dashArray: '5, 5'}).addTo(routeLayer);
             map.fitBounds(polyline.getBounds(), {padding: [30, 30]});
@@ -680,9 +393,7 @@
     }
 
     function calculateKPIs(data) {
-        let firstR = data[0]; 
-        let lastR = data[data.length - 1];
-
+        let firstR = data[0]; let lastR = data[data.length - 1];
         document.getElementById('kpi-checkin').innerText = firstR[COL.TIME_IN] || '00:00:00';
         document.getElementById('kpi-checkout').innerText = lastR[COL.TIME_OUT] || '00:00:00';
 
@@ -696,13 +407,10 @@
             let loTrinh = (r[COL.LO_TRINH] || '').toString().toLowerCase();
             if(loTrinh.includes('trong')) inRouteCount++;
             else if(loTrinh.includes('ngoài')) outRouteCount++;
-            
             khTimeMins += timeStrToMinutes(r[COL.TIME_TOTAL]);
 
             let dsDonHangStr = String(r[COL.DS_DON_HANG] || '').toUpperCase().trim();
-            if(dsDonHangStr.includes('PO')) {
-                orderedKhCount++; 
-            }
+            if(dsDonHangStr.includes('PO')) orderedKhCount++; 
         });
 
         document.getElementById('kpi-total-visited').innerText = totalVisited;
@@ -719,28 +427,43 @@
         document.getElementById('kpi-moving-time').innerText = minutesToStr((totalDist / 35) * 60);
     }
 
+    /* ================= RENDER BẢNG 2 TẦNG HEADER MÀU SẮC PHÂN BIỆT ================= */
     function renderDetailTable(data) {
-        const thead = document.getElementById('table-head-row');
+        const thead = document.getElementById('table-head');
         const tbody = document.getElementById('table-body');
         const tfoot = document.getElementById('table-foot');
 
-        let headersHTML = `
-            <th>Mã KH</th>
-            <th>Tên KH</th>
-            <th>Bắt đầu</th>
-            <th>Kết thúc</th>
-            <th class="num-right">Khoảng cách đến KH sau (km)</th>
-            <th class="num-right">TG tại KH (phút)</th>
-            <th class="num-right">TG Di chuyển (phút)</th>
+        // Tạo cấu trúc 2 dòng cho Header theo đúng chuẩn yêu cầu bôi màu
+        let row1_HTML = `
+            <th rowspan="2" class="route-th">Mã KH</th>
+            <th rowspan="2" class="route-th">Tên KH</th>
+            <th rowspan="2" class="route-th">Bắt đầu</th>
+            <th rowspan="2" class="route-th">Kết thúc</th>
+            <th rowspan="2" class="route-th num-right">Khoảng cách đến KH sau (km)</th>
+            <th rowspan="2" class="route-th num-right">TG tại KH (phút)</th>
+            <th rowspan="2" class="route-th num-right">TG Di chuyển (phút)</th>
         `;
         
-        categoryList.forEach(cat => { headersHTML += `<th class="num-right">DS ${cat}</th>`; });
-        thead.innerHTML = headersHTML;
+        if(categoryList.length > 0) {
+            // Merge ô ngành hàng bôi xanh lá nằm phía trên
+            row1_HTML += `<th colspan="${categoryList.length + 1}" class="sales-th">Doanh số theo ngành hàng</th>`;
+        } else {
+            row1_HTML += `<th class="sales-th">Tổng doanh số</th>`;
+        }
+
+        let row2_HTML = '';
+        categoryList.forEach(cat => {
+            row2_HTML += `<th class="sales-th num-right">DS ${cat}</th>`;
+        });
+        row2_HTML += `<th class="sales-th num-right">Tổng doanh số</th>`;
+
+        thead.innerHTML = `<tr>${row1_HTML}</tr>` + (categoryList.length > 0 ? `<tr>${row2_HTML}</tr>` : '');
 
         let totalKHTime = 0, totalMoveTime = 0, totalDist = 0;
         let catTotals = new Array(categoryList.length).fill(0);
-        tbody.innerHTML = '';
+        let grandTotalSalesAll = 0; // Tính tổng cộng dồn tất cả đơn hàng
 
+        tbody.innerHTML = '';
         data.forEach((row, index) => {
             let tr = document.createElement('tr');
             
@@ -748,17 +471,16 @@
             if(index < data.length - 1) distToNext = getHaversine14(row[COL.LAT], row[COL.LNG], data[index+1][COL.LAT], data[index+1][COL.LNG]);
             totalDist += distToNext;
 
-            let timeIn = row[COL.TIME_IN] || '';
-            let timeOut = row[COL.TIME_OUT] || '';
+            let timeIn = row[COL.TIME_IN] || ''; let timeOut = row[COL.TIME_OUT] || '';
             let timeAtKH = Math.max(0, timeStrToMinutes(timeOut) - timeStrToMinutes(timeIn));
             let moveTime = (distToNext / 35) * 60;
             
             totalKHTime += timeAtKH; totalMoveTime += moveTime;
 
             let salesByCat = new Array(categoryList.length).fill(0);
-            
+            let rowTotalSales = 0; // Tổng doanh số riêng của dòng này
+
             let dsDonHangStr = String(row[COL.DS_DON_HANG] || '').toUpperCase().trim();
-            
             if(dsDonHangStr.includes('PO') && rawOrderData.length > 0) {
                 let listPO = dsDonHangStr.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean); 
                 
@@ -771,6 +493,8 @@
                             let val = parseFloat(valStr) || 0;
                             salesByCat[catIdx] += val;
                             catTotals[catIdx] += val;
+                            rowTotalSales += val;
+                            grandTotalSalesAll += val;
                         }
                     });
                 });
@@ -785,28 +509,33 @@
                 <td class="num-right">${formatNum(timeAtKH)}</td>
                 <td class="num-right">${formatNum(moveTime)}</td>
             `;
+            // Render các ô doanh số ngành hàng
             salesByCat.forEach(s => { rowHTML += `<td class="num-right">${formatCurrency(s)}</td>`; });
+            // Ô tổng doanh số của dòng (bên phải cột ngành hàng cuối cùng)
+            rowHTML += `<td class="num-right" style="font-weight:bold; background-color:#f8fafc;">${formatCurrency(rowTotalSales)}</td>`;
+            
             tr.innerHTML = rowHTML;
             tbody.appendChild(tr);
         });
 
+        // Dòng GRAND TOTAL dưới chân bảng
         let grandTotalHTML = `
             <td colspan="4" style="text-align:right; font-size:14px;"><b>GRAND TOTAL</b></td>
-            <td class="num-right" style="color:#0ea5e9; font-size:14px;"><b>${formatNum(totalDist)} km</b></td>
+            <td class="num-right" style="color:#1e40af; font-size:14px;"><b>${formatNum(totalDist)} km</b></td>
             <td class="num-right" style="color:#ec4899; font-size:14px;"><b>${formatNum(totalKHTime/60)} giờ</b></td>
             <td class="num-right" style="color:#64748b; font-size:14px;"><b>${formatNum(totalMoveTime/60)} giờ</b></td>
         `;
-        catTotals.forEach(ct => { grandTotalHTML += `<td class="num-right" style="color:#10b981; font-size:14px;"><b>${formatCurrency(ct)}</b></td>`; });
+        catTotals.forEach(ct => { grandTotalHTML += `<td class="num-right" style="color:#16a34a; font-size:14px;"><b>${formatCurrency(ct)}</b></td>`; });
+        // Tổng doanh số của toàn bộ ngành hàng
+        grandTotalHTML += `<td class="num-right" style="color:#16a34a; font-size:14px; background-color:#e2e8f0;"><b>${formatCurrency(grandTotalSalesAll)}</b></td>`;
         
         let tfRow = document.createElement('tr');
         tfRow.innerHTML = grandTotalHTML;
         tfoot.innerHTML = ''; tfoot.appendChild(tfRow);
     }
 
-    /* ================= CÁC HÀM TRỢ NĂNG ================= */
-    function resetDashboard() {
-        dashboard.style.display = 'none'; routeLayer.clearLayers();
-    }
+    /* ================= CÁC HÀM TIỆN ÍCH TIÊU CHUẨN ================= */
+    function resetDashboard() { dashboard.style.display = 'none'; routeLayer.clearLayers(); }
     function timeStrToMinutes(timeStr) {
         if (!timeStr) return 0;
         let p = timeStr.toString().trim().split(':');
@@ -820,8 +549,7 @@
         lat1 = parseFloat(lat1); lon1 = parseFloat(lon1); lat2 = parseFloat(lat2); lon2 = parseFloat(lon2);
         if(!lat1 || !lon1 || !lat2 || !lon2) return 0;
         const R = 6371; 
-        const dLat = (lat2 - lat1) * (Math.PI / 180);
-        const dLon = (lon2 - lon1) * (Math.PI / 180);
+        const dLat = (lat2 - lat1) * (Math.PI / 180); const dLon = (lon2 - lon1) * (Math.PI / 180);
         const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
         return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))) * 1.4;
     }
