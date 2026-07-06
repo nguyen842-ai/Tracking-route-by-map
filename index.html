@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Theo Dõi Đi Tuyến Nhân Viên - Master Dashboard</title>
+    <title>Theo Dõi Đi Tuyến Nhân Viên - Bản Rút Gọn Tối Ưu</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -11,12 +11,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
-        /* Thu nhỏ bố cục toàn trang xuống khoảng 20% (Zoom 80%) */
         body, html {
             margin: 0; padding: 0; height: 100%;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f1f5f9;
-            font-size: 13px; /* Thêm dòng này để thu nhỏ font chữ */
+            font-size: 13px; 
         }
         
         #app-container { display: flex; height: 100vh; width: 100%; }
@@ -44,7 +43,7 @@
             overflow-y: auto; background-color: #ffffff;
         }
 
-        /* Khu vực Bộ lọc */
+        /* Khu vực Bộ lọc & Ảnh đại diện */
         .filter-header-section {
             display: flex; margin-bottom: 20px; background: #f8fafc;
             padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;
@@ -70,7 +69,6 @@
         .summary-card { margin-bottom: 20px; }
         .header-title-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 15px; }
         .header-title-row h2 { margin: 0; color: #0f172a; }
-        .total-sales-badge { background: #10b981; color: white; padding: 5px 15px; border-radius: 20px; font-size: 18px; font-weight: bold; }
         
         .kpi-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .kpi-box { background: #f8fafc; padding: 12px; border-radius: 6px; border-left: 4px solid #3b82f6; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
@@ -86,7 +84,7 @@
         tfoot { background-color: #e2e8f0; font-weight: bold; }
         .num-right { text-align: right; }
 
-        /* Marker CSS */
+        /* Vòng tròn Marker trên Map */
         .route-marker {
             border-radius: 50%; color: white; font-weight: bold;
             display: flex; align-items: center; justify-content: center;
@@ -121,17 +119,14 @@
                 <div class="filter-row">
                     <h3>Bộ Lọc</h3>
                     <div class="filter-item">
-                        <select id="sel-nv" disabled><option value="">-- Chọn Nhân viên --</option></select>
+                        <label>Đơn vị PP</label>
+                        <select id="sel-npp" disabled><option value="">-- Chọn NPP --</option></select>
                     </div>
                 </div>
                 <div class="filter-row">
                     <div class="filter-item">
-                        <label>Đơn vị PP</label>
-                        <select id="sel-npp" disabled><option value="">-- Chọn NPP --</option></select>
-                    </div>
-                    <div class="filter-item">
-                        <label>Tuần (Week)</label>
-                        <select id="sel-week" disabled><option value="">-- Chọn Tuần --</option></select>
+                        <label>Nhân viên</label>
+                        <select id="sel-nv" disabled><option value="">-- Chọn Nhân viên --</option></select>
                     </div>
                     <div class="filter-item">
                         <label>Thứ (Day)</label>
@@ -144,7 +139,6 @@
         <div class="summary-card" id="dashboard-section" style="display: none;">
             <div class="header-title-row">
                 <h2>📊 Bảng Tổng Hợp Tuyến Đường</h2>
-                <div class="total-sales-badge">Tổng doanh số DB: <span id="kpi-db-sales">0</span></div>
             </div>
             
             <div class="kpi-grid">
@@ -163,17 +157,17 @@
             </div>
 
             <div class="kpi-grid">
-                <div class="kpi-box" style="border-color: #f59e0b;">
-                    <div class="kpi-title">Tổng KH trên tuyến (DB)</div>
-                    <div class="kpi-value" id="kpi-total-route-kh">--</div>
-                </div>
                 <div class="kpi-box" style="border-color: #3b82f6;">
-                    <div class="kpi-title">Số KH trên tuyến ĐÃ ghé</div>
-                    <div class="kpi-value" id="kpi-visited-in-route">--</div>
+                    <div class="kpi-title">Số KH đã ghé thăm (Tổng)</div>
+                    <div class="kpi-value" id="kpi-total-visited">--</div>
                     <div class="kpi-sub">
-                        Không ghé (Trong tuyến): <b id="kpi-not-visited">0</b><br>
-                        Đã ghé (Ngoài tuyến): <b id="kpi-visited-out">0</b>
+                        Trong tuyến ghé: <b id="sub-in-route">0</b><br>
+                        Ngoài tuyến ghé: <b id="sub-out-route">0</b>
                     </div>
+                </div>
+                <div class="kpi-box" style="border-color: #f59e0b;">
+                    <div class="kpi-title">Số KH lên đơn thành công</div>
+                    <div class="kpi-value" id="kpi-ordered-kh">--</div>
                 </div>
                 <div class="kpi-box" style="border-color: #ec4899;">
                     <div class="kpi-title">Thời gian làm việc với KH</div>
@@ -212,20 +206,16 @@
 </div>
 
 <script>
-    /* ================= CẤU HÌNH HỆ THỐNG ================= */
-    const DB_SCRIPT_URL = "https://mrqldgycwovpbmzdeuyz.supabase.co/storage/v1/object/public/data/dataM6.js";
-    
-    // Cấu hình Cột file 1 (Báo cáo ghé thăm)
+    // Cấu hình vị trí cột (Chuẩn đếm từ 0)
     const COL = {
         NPP: 2, NV: 6, THU: 11, STT_GHE: 12, LO_TRINH: 13, MA_KH: 14, TEN_KH: 15,
         TIME_IN: 19, TIME_OUT: 20, TIME_TOTAL: 21, DS_DON_HANG: 22, LAT: 30, LNG: 31
     };
     
-    // Cấu hình Cột file 2 (Báo cáo đơn hàng)
     const COL_EX2 = {
-        MA_DON_HANG: 16,  // Cột Q
-        NGANH_HANG: 39,   // Cột AN
-        DOANH_SO: 34      // Cột AO (Bạn hãy chỉnh lại các con số nếu thực tế file của bạn ở cột khác. vd cột AO = 40, AP = 41)
+        MA_DON_HANG: 16,  // Cột Q (17 trừ 1)
+        NGANH_HANG: 39,   // Cột AN (40 trừ 1)
+        DOANH_SO: 34      // Cột AI (35 trừ 1)
     };
 
     const colorMap = {
@@ -233,41 +223,22 @@
         'Thứ 5': '#eab308', 'Thứ 6': '#000000', 'Thứ 7': '#3b82f6'
     };
 
-    /* ================= BIẾN TOÀN CỤC ================= */
     let rawRouteData = [];
     let rawOrderData = [];
-    let dbMaster = []; // DB Tuyến
-    let dbSales = [];  // DB Doanh số
-    let categoryList = []; // Danh sách ngành hàng linh hoạt
+    let categoryList = []; 
 
-    // Bản đồ
+    // Khởi tạo Map Leaflet
     const map = L.map('map').setView([10.8231, 106.6297], 10);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
     let routeLayer = L.layerGroup().addTo(map);
 
-    // DOM Elements
     const selNV = document.getElementById('sel-nv');
     const selNPP = document.getElementById('sel-npp');
-    const selWeek = document.getElementById('sel-week');
     const selDay = document.getElementById('sel-day');
     const avatarImg = document.getElementById('avatar-img');
     const dashboard = document.getElementById('dashboard-section');
 
-    /* ================= 1. TẢI DATABASE TỪ LINK ================= */
-    function loadExternalDB() {
-        let script = document.createElement('script');
-        script.src = DB_SCRIPT_URL;
-        script.onload = () => {
-            // Giả định trong file JS có chứa mảng db_master và db_sales
-            if(typeof db_master !== 'undefined') dbMaster = db_master;
-            if(typeof db_sales !== 'undefined') dbSales = db_sales;
-            console.log("Đã tải xong DB Master & DB Sales");
-        };
-        document.head.appendChild(script);
-    }
-    loadExternalDB();
-
-    /* ================= 2. ĐỌC FILE EXCEL ================= */
+    /* ================= ĐỌC FILE EXCEL ================= */
     document.getElementById('fileRoute').addEventListener('change', (e) => handleExcel(e, 1));
     document.getElementById('fileOrder').addEventListener('change', (e) => handleExcel(e, 2));
 
@@ -281,34 +252,35 @@
             const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
             
             if(type === 1) {
-                // File Ghé thăm: Lọc dòng có STT
+                // File 1: Ghé thăm
                 rawRouteData = jsonData.filter(row => row[COL.NPP] && row[COL.NV] && !isNaN(parseInt(row[0])));
                 updateFilters();
             } else {
-                // File Đơn hàng
-                rawOrderData = jsonData.filter(row => row[COL_EX2.MA_DON_HANG]);
-                // Lấy danh sách ngành hàng
-                categoryList = [...new Set(rawOrderData.map(r => r[COL_EX2.NGANH_HANG]))].filter(Boolean);
+                // File 2: Đơn hàng
+                rawOrderData = jsonData; 
+                let cats = rawOrderData.map(row => row[COL_EX2.NGANH_HANG]).filter(Boolean);
+                categoryList = [...new Set(cats)].filter(c => c !== "Ngành hàng" && c !== "NGANH_HANG" && c !== "Category");
+                
+                console.log("Đã nạp các Ngành hàng:", categoryList);
+                
+                // Nếu đang hiển thị Dashboard thì tự refresh vẽ lại cột doanh số
+                if(selDay.value) processDataAndRender();
             }
         };
         reader.readAsArrayBuffer(file);
     }
 
-   /* ================= 3. XỬ LÝ BỘ LỌC (LOGIC MỚI: NPP -> NV -> THỨ/TUẦN) ================= */
+    /* ================= HỆ THỐNG BỘ LỌC TINH GỌN (NPP -> NV -> THỨ) ================= */
     function updateFilters() {
-        // 1. Tải file xong -> Lấy danh sách NPP đầu tiên
         let npps = [...new Set(rawRouteData.map(r => r[COL.NPP]))].filter(Boolean);
         selNPP.innerHTML = '<option value="">-- Chọn NPP --</option>';
         npps.forEach(npp => selNPP.innerHTML += `<option value="${npp}">${npp}</option>`);
         selNPP.disabled = false;
         
-        // Đặt lại các ô khác
         selNV.innerHTML = '<option value="">-- Chọn Nhân viên --</option>'; selNV.disabled = true;
-        selWeek.innerHTML = '<option value="">-- Chọn Tuần --</option>'; selWeek.disabled = true;
         selDay.innerHTML = '<option value="">-- Chọn Thứ --</option>'; selDay.disabled = true;
     }
 
-    // 2. Chọn NPP -> Lọc ra danh sách Nhân viên thuộc NPP đó
     selNPP.addEventListener('change', () => {
         const npp = selNPP.value;
         if (!npp) { resetDashboard(); return; }
@@ -318,72 +290,48 @@
         nvs.forEach(nv => selNV.innerHTML += `<option value="${nv}">${nv}</option>`);
         selNV.disabled = false;
         
-        // Đặt lại Thứ & Tuần
-        selWeek.innerHTML = '<option value="">-- Chọn Tuần --</option>'; selWeek.disabled = true;
         selDay.innerHTML = '<option value="">-- Chọn Thứ --</option>'; selDay.disabled = true;
     });
 
-    // 3. Chọn Nhân viên -> Gọi Avatar và Mở khóa chọn Thứ & Tuần
     selNV.addEventListener('change', () => {
         const nv = selNV.value;
         const npp = selNPP.value;
         if (!nv) { resetDashboard(); return; }
         
-        // Cập nhật Avatar
+        // Thay avatar hình nhân viên
         avatarImg.src = `assets/images/nhanvien/${nv}.PNG`;
 
-        // Lấy danh sách "Thứ" từ file Excel dựa trên NPP và NV đã chọn
         let thus = [...new Set(rawRouteData.filter(r => r[COL.NPP] === npp && r[COL.NV] === nv).map(r => r[COL.THU]))].filter(Boolean);
         thus.sort((a, b) => a.localeCompare(b));
         
         selDay.innerHTML = '<option value="">-- Chọn Thứ --</option>';
         thus.forEach(thu => selDay.innerHTML += `<option value="${thu}">${thu}</option>`);
         selDay.disabled = false;
-
-        // Bật ô chọn Tuần (Dùng để dò DB Master & Sales)
-        selWeek.innerHTML = '<option value="">-- Chọn Tuần --</option><option value="W1">Week 1</option><option value="W2">Week 2</option><option value="W3">Week 3</option><option value="W4">Week 4</option>';
-        selWeek.disabled = false;
-    });
-
-    // 4. Trigger chạy Dashboard: Cần phải chọn CẢ Tuần VÀ Thứ thì hệ thống mới xuất dữ liệu
-    selDay.addEventListener('change', () => {
-        if(!selWeek.value) alert("Vui lòng chọn thêm Tuần để đối chiếu với Database Master!");
-        else processDataAndRender();
-    });
-    
-    selWeek.addEventListener('change', () => {
-        if(selDay.value) processDataAndRender();
     });
 
     selDay.addEventListener('change', processDataAndRender);
 
-    /* ================= 4. XỬ LÝ LOGIC CHÍNH ================= */
+    /* ================= XỬ LÝ LOGIC CHÍNH & KPI ================= */
     function processDataAndRender() {
         const nv = selNV.value;
         const npp = selNPP.value;
-        const week = selWeek.value;
         const day = selDay.value;
 
-        if (!nv || !npp || !week || !day) return;
+        if (!nv || !npp || !day) return;
 
-        // 4.1. Dữ liệu Route từ Excel 1
         let currentRoute = rawRouteData.filter(r => r[COL.NV] === nv && r[COL.NPP] === npp && r[COL.THU] === day);
         currentRoute.sort((a, b) => parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]));
 
-        if (currentRoute.length === 0) return alert("Không có dữ liệu tuyến trong file Excel cho lựa chọn này!");
-
-        // 4.2. Khớp Sales & Khớp DB Master
-        let sumDBSales = calculateDBSales(nv, week, day);
-        document.getElementById('kpi-db-sales').innerText = formatCurrency(sumDBSales) + " ₫";
+        if (currentRoute.length === 0) return alert("Không tìm thấy lộ trình phù hợp!");
 
         drawMap(currentRoute, day);
-        calculateKPIs(currentRoute, nv, week, day);
+        calculateKPIs(currentRoute);
         renderDetailTable(currentRoute);
         
         dashboard.style.display = 'block';
     }
 
-    /* --- VẼ MAP --- */
+    /* VẼ ĐƯỜNG ĐI TRÊN BẢN ĐỒ */
     function drawMap(data, day) {
         routeLayer.clearLayers();
         let latlngs = [];
@@ -402,7 +350,7 @@
                     iconSize: [26, 26], iconAnchor: [13, 13]
                 });
                 let marker = L.marker([lat, lng], {icon: icon});
-                marker.bindPopup(`<b>${row[COL.TEN_KH] || 'N/A'}</b><br>STT: ${stt}<br>Đến: ${row[COL.TIME_IN] || 'N/A'}`);
+                marker.bindPopup(`<b>${row[COL.TEN_KH] || 'N/A'}</b><br>STT ghé: ${stt}<br>Giờ vào: ${row[COL.TIME_IN] || 'N/A'}`);
                 routeLayer.addLayer(marker);
             }
         });
@@ -413,12 +361,12 @@
         }
     }
 
-    /* --- TÍNH TOÁN KPI --- */
-    function calculateKPIs(data, nv, week, day) {
-        let firstR = data[0];
+    /* TÍNH TOÁN CÁC CHỈ SỐ KPI TỪ FILE */
+    function calculateKPIs(data) {
+        let firstR = data[0]; 
         let lastR = data[data.length - 1];
 
-        // R1: Times
+        // Giờ Check-in / Out
         let checkIn = firstR[COL.TIME_IN] || '00:00:00';
         let checkOut = lastR[COL.TIME_OUT] || '00:00:00';
         document.getElementById('kpi-checkin').innerText = checkIn;
@@ -427,50 +375,59 @@
         let workMins = timeStrToMinutes(checkOut) - timeStrToMinutes(checkIn);
         document.getElementById('kpi-totaltime').innerText = minutesToStr(Math.max(0, workMins));
 
-        // R2: Customers
-        // 1. Tổng KH trên tuyến từ DB Master (Giả định DB có các trường week, day, nv)
-        let totalDBRoute = dbMaster.filter(item => item.week === week && item.day === day && item.nv === nv).length;
-        // Nếu không có db thật lúc test, random 1 số cho dễ nhìn
-        if(totalDBRoute === 0 && dbMaster.length === 0) totalDBRoute = 45; 
-        document.getElementById('kpi-total-route-kh').innerText = totalDBRoute;
-
-        // 2. KH Trong tuyến / Ngoài tuyến
+        // Tính Số KH ghé thăm (Tổng, Trong tuyến, Ngoài tuyến)
+        let totalVisited = data.length;
         let inRouteCount = 0;
         let outRouteCount = 0;
         let khTimeMins = 0;
+        let orderedKhCount = 0; // Đếm số KH lên đơn thành công
 
         data.forEach(r => {
+            // Đếm lộ trình
             let loTrinh = (r[COL.LO_TRINH] || '').toString().toLowerCase();
             if(loTrinh.includes('trong')) inRouteCount++;
             else if(loTrinh.includes('ngoài')) outRouteCount++;
             
+            // Tính tổng thời gian tại KH
             khTimeMins += timeStrToMinutes(r[COL.TIME_TOTAL]);
+
+            // Tính xem KH này có lên đơn thành công hay không
+            let dsDonHangStr = (r[COL.DS_DON_HANG] || '').toString().trim();
+            if(dsDonHangStr && rawOrderData.length > 0) {
+                let hasOrderValue = false;
+                let listPO = dsDonHangStr.split(',').map(s => s.trim());
+                listPO.forEach(po => {
+                    let orderRows = rawOrderData.filter(or => String(or[COL_EX2.MA_DON_HANG]).trim() === po);
+                    orderRows.forEach(or => {
+                        if((parseFloat(or[COL_EX2.DOANH_SO]) || 0) > 0) hasOrderValue = true;
+                    });
+                });
+                if(hasOrderValue) orderedKhCount++; // Nếu tổng đơn của KH này > 0 thì cộng 1 khách lên đơn
+            }
         });
 
-        document.getElementById('kpi-visited-in-route').innerText = inRouteCount;
-        document.getElementById('kpi-not-visited').innerText = Math.max(0, totalDBRoute - inRouteCount);
-        document.getElementById('kpi-visited-out').innerText = outRouteCount;
+        document.getElementById('kpi-total-visited').innerText = totalVisited;
+        document.getElementById('sub-in-route').innerText = inRouteCount;
+        document.getElementById('sub-out-route').innerText = outRouteCount;
+        document.getElementById('kpi-ordered-kh').innerText = orderedKhCount;
         document.getElementById('kpi-working-kh').innerText = minutesToStr(khTimeMins);
 
-        // R3: Distance (Haversine * 1.4)
+        // Tính Quãng đường Haversine nhân hệ số 1.4
         let totalDist = 0;
         for(let i = 0; i < data.length - 1; i++) {
-            let d = getHaversine14(data[i][COL.LAT], data[i][COL.LNG], data[i+1][COL.LAT], data[i+1][COL.LNG]);
-            totalDist += d;
+            totalDist += getHaversine14(data[i][COL.LAT], data[i][COL.LNG], data[i+1][COL.LAT], data[i+1][COL.LNG]);
         }
         document.getElementById('kpi-distance').innerText = formatNum(totalDist) + " km";
-        
-        let moveTimeMins = (totalDist / 35) * 60;
-        document.getElementById('kpi-moving-time').innerText = minutesToStr(moveTimeMins);
+        document.getElementById('kpi-moving-time').innerText = minutesToStr((totalDist / 35) * 60);
     }
 
-    /* --- VẼ BẢNG CHI TIẾT --- */
+    /* VẼ BẢNG CHI TIẾT KÈM DOANH SỐ TỪNG NGÀNH HÀNG */
     function renderDetailTable(data) {
         const thead = document.getElementById('table-head-row');
         const tbody = document.getElementById('table-body');
         const tfoot = document.getElementById('table-foot');
 
-        // Tạo Header linh hoạt
+        // Render cột cơ bản
         let headersHTML = `
             <th>Mã KH</th>
             <th>Tên KH</th>
@@ -480,6 +437,8 @@
             <th class="num-right">TG tại KH (phút)</th>
             <th class="num-right">TG Di chuyển (phút)</th>
         `;
+        
+        // Ghép thêm các cột Ngành hàng động
         categoryList.forEach(cat => {
             headersHTML += `<th class="num-right">DS ${cat}</th>`;
         });
@@ -492,31 +451,25 @@
         data.forEach((row, index) => {
             let tr = document.createElement('tr');
             
-            // Tính khoảng cách đến điểm kế tiếp
             let distToNext = 0;
-            if(index < data.length - 1) {
-                distToNext = getHaversine14(row[COL.LAT], row[COL.LNG], data[index+1][COL.LAT], data[index+1][COL.LNG]);
-            }
+            if(index < data.length - 1) distToNext = getHaversine14(row[COL.LAT], row[COL.LNG], data[index+1][COL.LAT], data[index+1][COL.LNG]);
             totalDist += distToNext;
 
-            // Tính thời gian
             let timeIn = row[COL.TIME_IN] || '';
             let timeOut = row[COL.TIME_OUT] || '';
             let timeAtKH = Math.max(0, timeStrToMinutes(timeOut) - timeStrToMinutes(timeIn));
             let moveTime = (distToNext / 35) * 60;
             
-            totalKHTime += timeAtKH;
-            totalMoveTime += moveTime;
+            totalKHTime += timeAtKH; totalMoveTime += moveTime;
 
-            // Tính Doanh số từng ngành hàng
+            // Xử lý đối soát mã đơn hàng bốc doanh số ngành hàng
             let salesByCat = new Array(categoryList.length).fill(0);
-            let dsDonHangStr = (row[COL.DS_DON_HANG] || '').toString();
+            let dsDonHangStr = (row[COL.DS_DON_HANG] || '').toString().trim();
             
-            // Nếu có đơn hàng, đem mã đi khớp với Excel 2
             if(dsDonHangStr && rawOrderData.length > 0) {
                 let listPO = dsDonHangStr.split(',').map(s => s.trim());
                 listPO.forEach(po => {
-                    let orderRows = rawOrderData.filter(or => or[COL_EX2.MA_DON_HANG] === po);
+                    let orderRows = rawOrderData.filter(or => String(or[COL_EX2.MA_DON_HANG]).trim() === po);
                     orderRows.forEach(or => {
                         let catIdx = categoryList.indexOf(or[COL_EX2.NGANH_HANG]);
                         if(catIdx >= 0) {
@@ -528,7 +481,6 @@
                 });
             }
 
-            // Build Row HTML
             let rowHTML = `
                 <td>${row[COL.MA_KH] || ''}</td>
                 <td>${row[COL.TEN_KH] || ''}</td>
@@ -543,71 +495,44 @@
             tbody.appendChild(tr);
         });
 
-        // TFOOT: Grand Total
+        // Hàng GRAND TOTAL dưới cùng
         let grandTotalHTML = `
-            <td colspan="4" style="text-align:right"><b>GRAND TOTAL</b></td>
-            <td class="num-right" style="color:#0ea5e9">${formatNum(totalDist)} km</td>
-            <td class="num-right" style="color:#ec4899">${formatNum(totalKHTime/60)} giờ</td>
-            <td class="num-right" style="color:#64748b">${formatNum(totalMoveTime/60)} giờ</td>
+            <td colspan="4" style="text-align:right; font-size:14px;"><b>GRAND TOTAL</b></td>
+            <td class="num-right" style="color:#0ea5e9; font-size:14px;"><b>${formatNum(totalDist)} km</b></td>
+            <td class="num-right" style="color:#ec4899; font-size:14px;"><b>${formatNum(totalKHTime/60)} giờ</b></td>
+            <td class="num-right" style="color:#64748b; font-size:14px;"><b>${formatNum(totalMoveTime/60)} giờ</b></td>
         `;
-        catTotals.forEach(ct => { grandTotalHTML += `<td class="num-right" style="color:#10b981">${formatCurrency(ct)}</td>`; });
+        catTotals.forEach(ct => { grandTotalHTML += `<td class="num-right" style="color:#10b981; font-size:14px;"><b>${formatCurrency(ct)}</b></td>`; });
         
         let tfRow = document.createElement('tr');
         tfRow.innerHTML = grandTotalHTML;
-        tfoot.innerHTML = '';
-        tfoot.appendChild(tfRow);
+        tfoot.innerHTML = ''; tfoot.appendChild(tfRow);
     }
 
-    /* ================= CÁC HÀM TIỆN ÍCH ================= */
+    /* ================= CÁC HÀM TRỢ NĂNG TÍNH TOÁN ================= */
     function resetDashboard() {
-        dashboard.style.display = 'none';
-        routeLayer.clearLayers();
+        dashboard.style.display = 'none'; routeLayer.clearLayers();
     }
-
     function timeStrToMinutes(timeStr) {
         if (!timeStr) return 0;
-        let parts = timeStr.toString().trim().split(':');
-        let h = parseInt(parts[0]) || 0; let m = parseInt(parts[1]) || 0; let s = parseInt(parts[2]) || 0;
-        return (h * 60) + m + (s / 60);
+        let p = timeStr.toString().trim().split(':');
+        return (parseInt(p[0])||0)*60 + (parseInt(p[1])||0) + (parseInt(p[2])||0)/60;
     }
-
     function minutesToStr(mins) {
         if (isNaN(mins) || mins <= 0) return "0 giờ 0 phút";
-        let h = Math.floor(mins / 60); let m = Math.floor(mins % 60);
-        return `${h} giờ ${m} phút`;
+        return `${Math.floor(mins/60)} giờ ${Math.floor(mins%60)} minutes`;
     }
-
-    // Tính khoảng cách Haversine và nhân 1.4
     function getHaversine14(lat1, lon1, lat2, lon2) {
-        lat1 = parseFloat(lat1); lon1 = parseFloat(lon1);
-        lat2 = parseFloat(lat2); lon2 = parseFloat(lon2);
+        lat1 = parseFloat(lat1); lon1 = parseFloat(lon1); lat2 = parseFloat(lat2); lon2 = parseFloat(lon2);
         if(!lat1 || !lon1 || !lat2 || !lon2) return 0;
-
         const R = 6371; 
         const dLat = (lat2 - lat1) * (Math.PI / 180);
         const dLon = (lon2 - lon1) * (Math.PI / 180);
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return (R * c) * 1.4; // Nhân hệ số 1.4 theo yêu cầu
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))) * 1.4;
     }
-
-    // Format số chuẩn quốc tế
-    function formatNum(num) {
-        return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0);
-    }
-    
-    function formatCurrency(num) {
-        return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num || 0);
-    }
-
-    function calculateDBSales(nv, week, day) {
-        // Giả định dbSales có cấu trúc {nv, week, day, amount}
-        if(!dbSales || dbSales.length === 0) return 0; // Trả về 0 nếu file M6.js chưa có chuẩn
-        let filtered = dbSales.filter(item => item.nv === nv && item.week === week && item.day === day);
-        return filtered.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-    }
+    function formatNum(num) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0); }
+    function formatCurrency(num) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num || 0); }
 </script>
 
 </body>
