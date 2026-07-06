@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Theo Dõi Đi Tuyến Nhân Viên - Master Dashboard</title>
+    <title id="page-title">Theo Dõi Đi Tuyến Nhân Viên</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -18,7 +18,7 @@
             font-size: 13px; 
         }
         
-        #app-container { display: flex; height: 100vh; width: 100%; }
+        #app-container { display: flex; height: 100vh; width: 100%; position: relative;}
         
         /* ---------- BÊN TRÁI 40% ---------- */
         #left-panel {
@@ -31,13 +31,20 @@
             padding: 15px; background: #e2e8f0; border-bottom: 2px solid #cbd5e1;
         }
         .upload-warning {
-            color: #dc2626; font-weight: bold; font-size: 13px;
-            background: #fee2e2; border: 1px solid #fca5a5;
-            padding: 8px 12px; border-radius: 6px; margin-bottom: 12px;
+            color: #1e40af; font-weight: bold; font-size: 15px; text-transform: uppercase;
+            background: #dbeafe; border: 1px solid #bfdbfe; text-align: center;
+            padding: 12px; border-radius: 6px; margin-bottom: 12px;
         }
-        .file-upload-box { margin-bottom: 10px; }
-        .file-upload-box label { font-weight: bold; display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
-        .file-upload-box input { width: 100%; padding: 5px; font-size: 13px;}
+        
+        .btn-primary {
+            width: 100%; padding: 12px; background-color: #3b82f6; color: white;
+            border: none; border-radius: 6px; font-weight: bold; font-size: 14px;
+            cursor: pointer; transition: background 0.3s; margin-bottom: 15px;
+        }
+        .btn-primary:hover { background-color: #2563eb; }
+        .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; }
+        
+        .file-status-box { margin-bottom: 10px; display: flex; justify-content: space-between; font-weight: bold;}
         .status-badge { font-weight: normal; font-size: 12px; }
         
         #map { flex-grow: 1; width: 100%; background: #e2e8f0; z-index: 1; }
@@ -47,18 +54,27 @@
             width: 60%; height: 100%;
             padding: 20px; box-sizing: border-box;
             overflow-y: auto; background-color: #ffffff;
+            position: relative;
         }
+
+        /* Lang Switcher */
+        .lang-switcher {
+            position: absolute; top: 15px; right: 20px; display: flex; gap: 5px;
+        }
+        .lang-btn {
+            background: white; border: 1px solid #cbd5e1; padding: 5px 10px;
+            border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;
+        }
+        .lang-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
 
         /* Khu vực Bộ lọc & Ảnh đại diện */
         .filter-header-section {
             display: flex; margin-bottom: 20px; background: #f8fafc;
-            padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;
+            padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 30px;
         }
         #avatar-container {
-            width: 100px; height: 120px;
-            margin-right: 20px;
-            border: 2px dashed #cbd5e1; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
+            width: 100px; height: 120px; margin-right: 20px; border: 2px dashed #cbd5e1;
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
             background-color: #fff; overflow: hidden;
         }
         #avatar-container img { width: 100%; height: 100%; object-fit: cover; }
@@ -82,16 +98,16 @@
         .kpi-value { font-size: 18px; color: #0f172a; font-weight: bold; }
         .kpi-sub { font-size: 11px; color: #64748b; margin-top: 5px; border-top: 1px dashed #cbd5e1; padding-top: 5px; }
 
-        /* Bảng Chi Tiết Định Dạng Màu Header */
+        /* Bảng Chi Tiết */
         .data-table-container { overflow-x: auto; max-width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1100px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; font-size: 13px; }
         th, td { padding: 8px 10px; text-align: left; border: 1px solid #e2e8f0; }
         
-        /* Thống nhất bôi màu Header theo khu vực */
-        th.route-th { background-color: #1e40af !important; color: white !important; font-weight: bold; text-align: center; vertical-align: middle; }
-        th.sales-th { background-color: #16a34a !important; color: white !important; font-weight: bold; text-align: center; vertical-align: middle; }
+        th.route-th { background-color: #1e40af !important; color: white !important; font-weight: bold; text-align: center; vertical-align: middle; white-space: normal !important; word-wrap: break-word; max-width: 120px; }
+        th.sales-th { background-color: #16a34a !important; color: white !important; font-weight: bold; text-align: center; vertical-align: middle; white-space: normal !important; word-wrap: break-word; max-width: 100px; }
         
-        th { position: sticky; top: 0; white-space: nowrap; }
+        th { position: sticky; top: 0; }
+        td { white-space: nowrap; }
         tfoot { background-color: #e2e8f0; font-weight: bold; }
         .num-right { text-align: right; }
 
@@ -108,50 +124,53 @@
 <div id="app-container">
     <div id="left-panel">
         <div id="upload-section">
-            <div class="upload-warning">
-                ⚠️ Chú ý: Vui lòng đưa sheet raw data lên đầu tiên trước khi upload file.
+            <div class="upload-warning" data-i18n="warningTitle">
+                Báo cáo chi tiết ghé thăm khách hàng
             </div>
             
-            <div class="file-upload-box">
-                <label>
-                    <span>1. Báo cáo chi tiết ghé thăm</span>
-                    <span id="statusRoute" class="status-badge" style="color:#64748b;">(Chưa có file)</span>
-                </label>
-                <input type="file" id="fileRoute" accept=".xlsx, .xls, .csv">
+            <button id="btnLoadData" class="btn-primary" onclick="loadDataFromSupabase()" data-i18n="btnLoad">
+                📥 Tải Dữ Liệu
+            </button>
+
+            <div class="file-status-box">
+                <span data-i18n="lblRoute">1. Dữ liệu ghé thăm:</span>
+                <span id="statusRoute" class="status-badge" style="color:#64748b;" data-i18n="statusEmpty">(Chưa tải)</span>
             </div>
             
-            <div class="file-upload-box">
-                <label>
-                    <span>2. Báo cáo chi tiết đơn hàng</span>
-                    <span id="statusOrder" class="status-badge" style="color:#64748b;">(Chưa có file)</span>
-                </label>
-                <input type="file" id="fileOrder" accept=".xlsx, .xls, .csv">
+            <div class="file-status-box">
+                <span data-i18n="lblOrder">2. Dữ liệu đơn hàng:</span>
+                <span id="statusOrder" class="status-badge" style="color:#64748b;" data-i18n="statusEmpty">(Chưa tải)</span>
             </div>
         </div>
         <div id="map"></div>
     </div>
 
     <div id="right-panel">
+        <div class="lang-switcher">
+            <button id="btn-lang-vi" class="lang-btn active" onclick="setLang('vi')">🇻🇳 VI</button>
+            <button id="btn-lang-en" class="lang-btn" onclick="setLang('en')">🇬🇧 EN</button>
+        </div>
+
         <div class="filter-header-section">
             <div id="avatar-container">
                 <img id="avatar-img" src="" alt="Avatar" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23cbd5e1\' stroke-width=\'2\'><circle cx=\'12\' cy=\'8\' r=\'4\'/><path d=\'M18 21v-2a4 4 0 0 0-4-4H10a4 4 0 0 0-4 4v2\'/></svg>';">
             </div>
             <div class="filters-wrapper">
                 <div class="filter-row">
-                    <h3>Bộ Lọc</h3>
+                    <h3 data-i18n="filterTitle">Bộ Lọc</h3>
                     <div class="filter-item">
-                        <label>Đơn vị PP</label>
-                        <select id="sel-npp" disabled><option value="">-- Chọn NPP --</option></select>
+                        <label data-i18n="lblNPP">Đơn vị PP</label>
+                        <select id="sel-npp" disabled><option value="" data-i18n="optNPP">-- Chọn NPP --</option></select>
                     </div>
                 </div>
                 <div class="filter-row">
                     <div class="filter-item">
-                        <label>Nhân viên</label>
-                        <select id="sel-nv" disabled><option value="">-- Chọn Nhân viên --</option></select>
+                        <label data-i18n="lblNV">Nhân viên</label>
+                        <select id="sel-nv" disabled><option value="" data-i18n="optNV">-- Chọn Nhân viên --</option></select>
                     </div>
                     <div class="filter-item">
-                        <label>Thứ (Day)</label>
-                        <select id="sel-day" disabled><option value="">-- Chọn Thứ --</option></select>
+                        <label data-i18n="lblDay">Thứ (Day)</label>
+                        <select id="sel-day" disabled><option value="" data-i18n="optDay">-- Chọn Thứ --</option></select>
                     </div>
                 </div>
             </div>
@@ -159,63 +178,62 @@
 
         <div class="summary-card" id="dashboard-section" style="display: none;">
             <div class="header-title-row">
-                <h2>📊 Bảng Tổng Hợp Tuyến Đường</h2>
+                <h2 data-i18n="kpiHeader">📊 Bảng Tổng Hợp Tuyến Đường</h2>
             </div>
             
             <div class="kpi-grid">
                 <div class="kpi-box" style="border-color: #10b981;">
-                    <div class="kpi-title">Giờ Check-in (CH đầu tiên)</div>
+                    <div class="kpi-title" data-i18n="kpiCheckin">Giờ Check-in (CH đầu tiên)</div>
                     <div class="kpi-value" id="kpi-checkin">--</div>
                 </div>
                 <div class="kpi-box" style="border-color: #ef4444;">
-                    <div class="kpi-title">Giờ Check-out (CH cuối cùng)</div>
+                    <div class="kpi-title" data-i18n="kpiCheckout">Giờ Check-out (CH cuối cùng)</div>
                     <div class="kpi-value" id="kpi-checkout">--</div>
                 </div>
                 <div class="kpi-box" style="border-color: #8b5cf6;">
-                    <div class="kpi-title">Tổng thời gian làm việc</div>
+                    <div class="kpi-title" data-i18n="kpiTotalTime">Tổng thời gian làm việc</div>
                     <div class="kpi-value" id="kpi-totaltime">--</div>
                 </div>
             </div>
 
             <div class="kpi-grid">
                 <div class="kpi-box" style="border-color: #3b82f6;">
-                    <div class="kpi-title">Số KH đã ghé thăm (Tổng)</div>
+                    <div class="kpi-title" data-i18n="kpiTotalVisit">Số KH đã ghé thăm (Tổng)</div>
                     <div class="kpi-value" id="kpi-total-visited">--</div>
                     <div class="kpi-sub">
-                        Trong tuyến ghé: <b id="sub-in-route">0</b><br>
-                        Ngoài tuyến ghé: <b id="sub-out-route">0</b>
+                        <span data-i18n="kpiInRoute">Trong tuyến ghé:</span> <b id="sub-in-route">0</b><br>
+                        <span data-i18n="kpiOutRoute">Ngoài tuyến ghé:</span> <b id="sub-out-route">0</b>
                     </div>
                 </div>
                 <div class="kpi-box" style="border-color: #f59e0b;">
-                    <div class="kpi-title">Số KH lên đơn thành công</div>
+                    <div class="kpi-title" data-i18n="kpiOrdered">Số KH lên đơn thành công</div>
                     <div class="kpi-value" id="kpi-ordered-kh">--</div>
                 </div>
                 <div class="kpi-box" style="border-color: #ec4899;">
-                    <div class="kpi-title">Thời gian làm việc với KH</div>
+                    <div class="kpi-title" data-i18n="kpiWorkTime">Thời gian làm việc với KH</div>
                     <div class="kpi-value" id="kpi-working-kh">--</div>
                 </div>
             </div>
 
             <div class="kpi-grid">
                 <div class="kpi-box" style="border-color: #0ea5e9;">
-                    <div class="kpi-title">Tổng quãng đường (×1.4)</div>
+                    <div class="kpi-title" data-i18n="kpiDist">Tổng quãng đường (×1.4)</div>
                     <div class="kpi-value" id="kpi-distance">--</div>
                 </div>
                 <div class="kpi-box" style="border-color: #64748b;">
-                    <div class="kpi-title">Thời gian di chuyển (v=35km/h)</div>
+                    <div class="kpi-title" data-i18n="kpiMoveTime">Thời gian di chuyển (v=35km/h)</div>
                     <div class="kpi-value" id="kpi-moving-time">--</div>
                 </div>
                 <div class="kpi-box" style="border-color: #94a3b8;">
-                    <div class="kpi-title">Thời gian nghỉ trưa</div>
-                    <div class="kpi-value">1 giờ 0 phút</div>
+                    <div class="kpi-title" data-i18n="kpiRest">Thời gian nghỉ trưa</div>
+                    <div class="kpi-value" data-i18n="valRest">1 giờ 0 phút</div>
                 </div>
             </div>
 
-            <h3 style="margin-top: 20px;">📋 Chi Tiết Ghé Thăm & Doanh Số</h3>
+            <h3 style="margin-top: 20px;" data-i18n="tableTitle">📋 Chi Tiết Ghé Thăm & Doanh Số</h3>
             <div class="data-table-container">
                 <table id="detail-table">
-                    <thead id="table-head">
-                        </thead>
+                    <thead id="table-head"></thead>
                     <tbody id="table-body"></tbody>
                     <tfoot id="table-foot"></tfoot>
                 </table>
@@ -225,23 +243,92 @@
 </div>
 
 <script>
-    // Định vị cột cố định cho File 1
+    // ================= TỪ ĐIỂN SONG NGỮ (I18N) =================
+    const langData = {
+        vi: {
+            pageTitle: "Theo Dõi Đi Tuyến Nhân Viên", warningTitle: "Báo cáo chi tiết ghé thăm khách hàng",
+            btnLoad: "📥 Tải Dữ Liệu", lblRoute: "1. Dữ liệu ghé thăm:", lblOrder: "2. Dữ liệu đơn hàng:",
+            statusEmpty: "(Chưa tải)", statusLoading: "⌛ Đang xử lý...", statusDone: "✅ Đã tải xong", statusError: "❌ Lỗi tải file",
+            
+            filterTitle: "Bộ Lọc", lblNPP: "Đơn vị PP", optNPP: "-- Chọn NPP --", lblNV: "Nhân viên", optNV: "-- Chọn Nhân viên --", lblDay: "Thứ (Day)", optDay: "-- Chọn Thứ --",
+            
+            kpiHeader: "📊 Bảng Tổng Hợp Tuyến Đường", kpiCheckin: "Giờ Check-in (KH đầu tiên)", kpiCheckout: "Giờ Check-out (KH cuối cùng)", kpiTotalTime: "Tổng thời gian làm việc",
+            kpiTotalVisit: "Số KH đã ghé thăm (Tổng)", kpiInRoute: "Trong tuyến ghé:", kpiOutRoute: "Ngoài tuyến ghé:", kpiOrdered: "Số KH lên đơn thành công", kpiWorkTime: "Thời gian làm việc với KH",
+            kpiDist: "Tổng quãng đường", kpiMoveTime: "Thời gian di chuyển", kpiRest: "Thời gian nghỉ trưa", valRest: "1 giờ 0 phút",
+            
+            tableTitle: "📋 Chi Tiết Ghé Thăm & Doanh Số", thCode: "Mã KH", thName: "Tên KH", thStart: "Thời điểm Bắt đầu", thEnd: "Thời điểm Kết thúc", thDist: "Khoảng cách đến KH kế tiếp (km)", thTimeAt: "Thời gian làm việc tại KH (phút)", thTimeMove: "Thời gian Di chuyển đến KH kế tiếp (phút)",
+            thSalesCat: "Doanh số theo ngành hàng", thSalesTotal: "Tổng doanh số", thDS: "DS ", thGrandTotal: "GRAND TOTAL",
+            
+            unitHour: "giờ", unitMinute: "phút", unitKm: "km", alertNoRoute: "Không tìm thấy lộ trình phù hợp!"
+        },
+        en: {
+            pageTitle: "Employee Route Tracking", warningTitle: "Customer Visit Detail Report",
+            btnLoad: "📥 Load Data", lblRoute: "1. Visit Data:", lblOrder: "2. Order Data:",
+            statusEmpty: "(Not loaded)", statusLoading: "⌛ Loading...", statusDone: "✅ Done", statusError: "❌ Fetch Error",
+            
+            filterTitle: "Filters", lblNPP: "Distributor", optNPP: "-- Select Distributor --", lblNV: "Employee", optNV: "-- Select Employee --", lblDay: "Day", optDay: "-- Select Day --",
+            
+            kpiHeader: "📊 Route Summary Dashboard", kpiCheckin: "Check-in Time (First store)", kpiCheckout: "Check-out Time (Last store)", kpiTotalTime: "Total Working Time",
+            kpiTotalVisit: "Total Visited Customers", kpiInRoute: "In-route:", kpiOutRoute: "Out-of-route:", kpiOrdered: "Successful Cus Ordered", kpiWorkTime: "Time spent with Customers",
+            kpiDist: "Total Distance", kpiMoveTime: "Moving Time", kpiRest: "Lunch Break", valRest: "1 hour 0 minutes",
+            
+            tableTitle: "📋 Visit & Sales Details", thCode: "Cust. Code", thName: "Cust. Name", thStart: "Start", thEnd: "End", thDist: "Distance to next cus (km)", thTimeAt: "Time at store (mins)", thTimeMove: "Moving time to next cus (mins)",
+            thSalesCat: "Sales by Category", thSalesTotal: "Total Sales", thDS: "Sales ", thGrandTotal: "GRAND TOTAL",
+            
+            unitHour: "hrs", unitMinute: "mins", unitKm: "km", alertNoRoute: "No matching route found!"
+        }
+    };
+
+    let curLang = 'vi';
+
+    function setLang(lang) {
+        curLang = lang;
+        document.getElementById('page-title').innerText = langData[curLang].pageTitle;
+        document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('btn-lang-' + lang).classList.add('active');
+        
+        // Dịch các text tĩnh
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            let key = el.getAttribute('data-i18n');
+            if (langData[curLang][key]) el.innerHTML = langData[curLang][key];
+        });
+
+        // Dịch Option Dropdown nếu chưa chọn gì
+        if (!selNPP.value && selNPP.options.length > 0) selNPP.options[0].text = langData[curLang].optNPP;
+        if (!selNV.value && selNV.options.length > 0) selNV.options[0].text = langData[curLang].optNV;
+        if (!selDay.value && selDay.options.length > 0) selDay.options[0].text = langData[curLang].optDay;
+
+        // Dịch Status tải file
+        const stRoute = document.getElementById('statusRoute');
+        const stOrder = document.getElementById('statusOrder');
+        if (rawRouteData.length === 0) {
+            stRoute.innerHTML = `<span style="color:#64748b;">${langData[curLang].statusEmpty}</span>`;
+            stOrder.innerHTML = `<span style="color:#64748b;">${langData[curLang].statusEmpty}</span>`;
+        } else {
+            stRoute.innerHTML = `<span style="color:#16a34a; font-weight:bold;">${langData[curLang].statusDone}</span>`;
+            stOrder.innerHTML = `<span style="color:#16a34a; font-weight:bold;">${langData[curLang].statusDone}</span>`;
+        }
+
+        // Tự động render lại bảng nếu đang hiển thị
+        if (selDay.value) processDataAndRender();
+    }
+
+
+    // ================= CẤU HÌNH & BIẾN TOÀN CỤC =================
+    const URL_ROUTE = 'https://mrqldgycwovpbmzdeuyz.supabase.co/storage/v1/object/public/mappingdata/map.xlsx';
+    const URL_ORDER = 'https://mrqldgycwovpbmzdeuyz.supabase.co/storage/v1/object/public/mappingdata/dh.xlsx';
+
     const COL = {
         NPP: 2, NV: 6, THU: 11, STT_GHE: 12, LO_TRINH: 13, MA_KH: 14, TEN_KH: 15,
         TIME_IN: 19, TIME_OUT: 20, TIME_TOTAL: 21, DS_DON_HANG: 22, LAT: 30, LNG: 31
     };
-    
-    // Khởi tạo vị trí mặc định cho File 2 (Sẽ tự động quét đè)
     let COL_EX2 = { MA_DON_HANG: 16, NGANH_HANG: 39, DOANH_SO: 34 };
 
     const colorMap = {
-        'Thứ 2': '#22c55e', 'Thứ 3': '#ef4444', 'Thứ 4': '#a855f7',
-        'Thứ 5': '#eab308', 'Thứ 6': '#000000', 'Thứ 7': '#3b82f6'
+        'Thứ 2': '#22c55e', 'Thứ 3': '#ef4444', 'Thứ 4': '#a855f7', 'Thứ 5': '#eab308', 'Thứ 6': '#000000', 'Thứ 7': '#3b82f6'
     };
 
-    let rawRouteData = [];
-    let rawOrderData = [];
-    let categoryList = []; 
+    let rawRouteData = []; let rawOrderData = []; let categoryList = []; 
 
     const map = L.map('map').setView([10.8231, 106.6297], 10);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
@@ -253,108 +340,106 @@
     const avatarImg = document.getElementById('avatar-img');
     const dashboard = document.getElementById('dashboard-section');
 
-    /* ================= XỬ LÝ FILE EXCEL & THÔNG BÁO LOADING ================= */
-    document.getElementById('fileRoute').addEventListener('change', (e) => handleExcel(e, 1));
-    document.getElementById('fileOrder').addEventListener('change', (e) => handleExcel(e, 2));
+    // ================= FETCH DATA TỪ SUPABASE =================
+    async function loadDataFromSupabase() {
+        const btn = document.getElementById('btnLoadData');
+        btn.disabled = true;
+        
+        const statusRoute = document.getElementById('statusRoute');
+        const statusOrder = document.getElementById('statusOrder');
+        
+        statusRoute.innerHTML = `<span style="color:#ea580c; font-weight:bold;">${langData[curLang].statusLoading}</span>`;
+        statusOrder.innerHTML = `<span style="color:#ea580c; font-weight:bold;">${langData[curLang].statusLoading}</span>`;
 
-    function handleExcel(e, type) {
-        const file = e.target.files[0];
-        if (!file) return;
+        try {
+            // 1. KÉO FILE MAP (GHÉ THĂM)
+            let resRoute = await fetch(URL_ROUTE);
+            let arrRoute = await resRoute.arrayBuffer();
+            let wbRoute = XLSX.read(arrRoute, {type: 'array'});
+            let jsonRoute = XLSX.utils.sheet_to_json(wbRoute.Sheets[wbRoute.SheetNames[0]], {header: 1});
+            rawRouteData = jsonRoute.filter(row => row[COL.NPP] && row[COL.NV] && !isNaN(parseInt(row[0])));
+            statusRoute.innerHTML = `<span style="color:#16a34a; font-weight:bold;">${langData[curLang].statusDone}</span>`;
 
-        // Bật cột Loading trạng thái đang xử lý
-        const statusEl = document.getElementById(type === 1 ? 'statusRoute' : 'statusOrder');
-        statusEl.innerHTML = "<span style='color:#ea580c; font-weight:bold;'>⌛ Đang xử lý...</span>";
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
-                
-                if(type === 1) {
-                    rawRouteData = jsonData.filter(row => row[COL.NPP] && row[COL.NV] && !isNaN(parseInt(row[0])));
-                    updateFilters();
-                    statusEl.innerHTML = "<span style='color:#16a34a; font-weight:bold;'>✅ Đã tải xong</span>";
-                } else {
-                    rawOrderData = jsonData; 
-                    
-                    // Mắt thần quét tìm cột
-                    let colPO = -1, colCat = -1, colSales = -1;
-                    for (let i = 0; i < Math.min(100, rawOrderData.length); i++) {
-                        let row = rawOrderData[i];
-                        if(!row) continue;
-                        for (let j = 0; j < row.length; j++) {
-                            let cellVal = String(row[j] || '').toLowerCase().replace(/\s+/g, ' ').trim();
-                            if (cellVal.includes('mã đơn hàng') || cellVal.includes('mã đh') || cellVal.includes('order') || cellVal === 'po') colPO = j;
-                            if (cellVal.includes('ngành hàng') || cellVal.includes('nhóm hàng') || cellVal.includes('loại hàng') || cellVal.includes('nganh hang') || cellVal.includes('category')) colCat = j;
-                            if (cellVal.includes('thành tiền') || cellVal.includes('doanh số') || cellVal.includes('doanh thu') || cellVal.includes('thanh tien')) colSales = j;
-                        }
-                    }
-
-                    if (colPO !== -1) COL_EX2.MA_DON_HANG = colPO;
-                    if (colCat !== -1) COL_EX2.NGANH_HANG = colCat;
-                    if (colSales !== -1) COL_EX2.DOANH_SO = colSales;
-
-                    let cats = rawOrderData.map(row => row[COL_EX2.NGANH_HANG]).filter(Boolean);
-                    categoryList = [...new Set(cats)].filter(c => {
-                        let strC = String(c).toLowerCase().replace(/\s+/g, ' ').trim();
-                        return !strC.includes("ngành hàng") && !strC.includes("nhóm hàng") && !strC.includes("loại hàng") && !strC.includes("category");
-                    });
-                    
-                    if(categoryList.length > 0) {
-                        statusEl.innerHTML = `<span style='color:#16a34a; font-weight:bold;'>✅ Đã nạp (${categoryList.length} ngành)</span>`;
-                    } else {
-                        statusEl.innerHTML = "<span style='color:#dc2626; font-weight:bold;'>❌ Lỗi đọc ngành hàng</span>";
-                        alert("Không tìm thấy tiêu đề ngành hàng ở cột AN (Cột 40)!");
-                    }
-                    
-                    if(selDay.value) processDataAndRender();
+            // 2. KÉO FILE ĐƠN HÀNG
+            let resOrder = await fetch(URL_ORDER);
+            let arrOrder = await resOrder.arrayBuffer();
+            let wbOrder = XLSX.read(arrOrder, {type: 'array'});
+            rawOrderData = XLSX.utils.sheet_to_json(wbOrder.Sheets[wbOrder.SheetNames[0]], {header: 1});
+            
+            // Auto-detect cột Đơn hàng
+            let colPO = -1, colCat = -1, colSales = -1;
+            for (let i = 0; i < Math.min(100, rawOrderData.length); i++) {
+                let row = rawOrderData[i];
+                if(!row) continue;
+                for (let j = 0; j < row.length; j++) {
+                    let cellVal = String(row[j] || '').toLowerCase().replace(/\s+/g, ' ').trim();
+                    if (cellVal.includes('mã đơn hàng') || cellVal.includes('mã đh') || cellVal.includes('order') || cellVal === 'po') colPO = j;
+                    if (cellVal.includes('ngành hàng') || cellVal.includes('nhóm hàng') || cellVal.includes('loại hàng') || cellVal.includes('nganh hang') || cellVal.includes('category')) colCat = j;
+                    if (cellVal.includes('thành tiền') || cellVal.includes('doanh số') || cellVal.includes('doanh thu') || cellVal.includes('thanh tien')) colSales = j;
                 }
-            } catch (err) {
-                statusEl.innerHTML = "<span style='color:#dc2626; font-weight:bold;'>❌ File lỗi</span>";
-                console.error(err);
             }
-        };
-        reader.readAsArrayBuffer(file);
+
+            if (colPO !== -1) COL_EX2.MA_DON_HANG = colPO;
+            if (colCat !== -1) COL_EX2.NGANH_HANG = colCat;
+            if (colSales !== -1) COL_EX2.DOANH_SO = colSales;
+
+            let cats = rawOrderData.map(row => row[COL_EX2.NGANH_HANG]).filter(Boolean);
+            categoryList = [...new Set(cats)].filter(c => {
+                let strC = String(c).toLowerCase().replace(/\s+/g, ' ').trim();
+                return !strC.includes("ngành hàng") && !strC.includes("nhóm hàng") && !strC.includes("loại hàng") && !strC.includes("category");
+            });
+            
+            statusOrder.innerHTML = `<span style="color:#16a34a; font-weight:bold;">${langData[curLang].statusDone}</span>`;
+            
+            // Update UI & Filters
+            updateFilters();
+            if(selDay.value) processDataAndRender();
+
+        } catch (err) {
+            console.error(err);
+            statusRoute.innerHTML = `<span style="color:#dc2626; font-weight:bold;">${langData[curLang].statusError}</span>`;
+            statusOrder.innerHTML = `<span style="color:#dc2626; font-weight:bold;">${langData[curLang].statusError}</span>`;
+            alert("Lỗi khi tải dữ liệu từ máy chủ (Network / CORS).");
+        } finally {
+            btn.disabled = false;
+        }
     }
 
-    /* ================= BỘ LỌC PHÂN CẤP SẠCH ================= */
+    // ================= BỘ LỌC =================
     function updateFilters() {
         let npps = [...new Set(rawRouteData.map(r => r[COL.NPP]))].filter(Boolean);
-        selNPP.innerHTML = '<option value="">-- Chọn NPP --</option>';
+        selNPP.innerHTML = `<option value="">${langData[curLang].optNPP}</option>`;
         npps.forEach(npp => selNPP.innerHTML += `<option value="${npp}">${npp}</option>`);
         selNPP.disabled = false;
-        selNV.innerHTML = '<option value="">-- Chọn Nhân viên --</option>'; selNV.disabled = true;
-        selDay.innerHTML = '<option value="">-- Chọn Thứ --</option>'; selDay.disabled = true;
+        selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`; selNV.disabled = true;
+        selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
     }
 
     selNPP.addEventListener('change', () => {
         const npp = selNPP.value;
         if (!npp) { resetDashboard(); return; }
         let nvs = [...new Set(rawRouteData.filter(r => r[COL.NPP] === npp).map(r => r[COL.NV]))].filter(Boolean);
-        selNV.innerHTML = '<option value="">-- Chọn Nhân viên --</option>';
+        selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`;
         nvs.forEach(nv => selNV.innerHTML += `<option value="${nv}">${nv}</option>`);
         selNV.disabled = false;
-        selDay.innerHTML = '<option value="">-- Chọn Thứ --</option>'; selDay.disabled = true;
+        selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
     });
 
     selNV.addEventListener('change', () => {
-        const nv = selNV.value;
-        const npp = selNPP.value;
+        const nv = selNV.value; const npp = selNPP.value;
         if (!nv) { resetDashboard(); return; }
         avatarImg.src = `assets/images/nhanvien/${nv}.PNG`;
 
         let thus = [...new Set(rawRouteData.filter(r => r[COL.NPP] === npp && r[COL.NV] === nv).map(r => r[COL.THU]))].filter(Boolean);
         thus.sort((a, b) => a.localeCompare(b));
-        selDay.innerHTML = '<option value="">-- Chọn Thứ --</option>';
+        selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`;
         thus.forEach(thu => selDay.innerHTML += `<option value="${thu}">${thu}</option>`);
         selDay.disabled = false;
     });
 
     selDay.addEventListener('change', processDataAndRender);
 
-    /* ================= ĐỒNG BỘ VÀ TÍNH TOÁN DỮ LIỆU ================= */
+    // ================= MAIN RENDER =================
     function processDataAndRender() {
         const nv = selNV.value; const npp = selNPP.value; const day = selDay.value;
         if (!nv || !npp || !day) return;
@@ -362,7 +447,7 @@
         let currentRoute = rawRouteData.filter(r => r[COL.NV] === nv && r[COL.NPP] === npp && r[COL.THU] === day);
         currentRoute.sort((a, b) => parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]));
 
-        if (currentRoute.length === 0) return alert("Không tìm thấy lộ trình phù hợp!");
+        if (currentRoute.length === 0) return alert(langData[curLang].alertNoRoute);
 
         drawMap(currentRoute, day);
         calculateKPIs(currentRoute);
@@ -371,7 +456,7 @@
     }
 
     function drawMap(data, day) {
-        routeLayer.clearLayers(); let latlngs = []; let color = colorMap[day] || '#333';
+        routeLayer.clearLayers(); let latlngs = []; let color = colorMap[day] || '#3b82f6';
         data.forEach((row) => {
             let lat = parseFloat(row[COL.LAT]); let lng = parseFloat(row[COL.LNG]); let stt = row[COL.STT_GHE];
             if (lat && lng) {
@@ -382,7 +467,7 @@
                     iconSize: [26, 26], iconAnchor: [13, 13]
                 });
                 let marker = L.marker([lat, lng], {icon: icon});
-                marker.bindPopup(`<b>${row[COL.TEN_KH] || 'N/A'}</b><br>STT: ${stt}<br>Giờ vào: ${row[COL.TIME_IN] || 'N/A'}`);
+                marker.bindPopup(`<b>${row[COL.TEN_KH] || 'N/A'}</b><br>STT: ${stt}<br>Time: ${row[COL.TIME_IN] || 'N/A'}`);
                 routeLayer.addLayer(marker);
             }
         });
@@ -405,8 +490,8 @@
 
         data.forEach(r => {
             let loTrinh = (r[COL.LO_TRINH] || '').toString().toLowerCase();
-            if(loTrinh.includes('trong')) inRouteCount++;
-            else if(loTrinh.includes('ngoài')) outRouteCount++;
+            if(loTrinh.includes('trong') || loTrinh.includes('in')) inRouteCount++;
+            else if(loTrinh.includes('ngoài') || loTrinh.includes('out')) outRouteCount++;
             khTimeMins += timeStrToMinutes(r[COL.TIME_TOTAL]);
 
             let dsDonHangStr = String(r[COL.DS_DON_HANG] || '').toUpperCase().trim();
@@ -423,45 +508,61 @@
         for(let i = 0; i < data.length - 1; i++) {
             totalDist += getHaversine14(data[i][COL.LAT], data[i][COL.LNG], data[i+1][COL.LAT], data[i+1][COL.LNG]);
         }
-        document.getElementById('kpi-distance').innerText = formatNum(totalDist) + " km";
+        document.getElementById('kpi-distance').innerText = `${formatNum(totalDist)} ${langData[curLang].unitKm}`;
         document.getElementById('kpi-moving-time').innerText = minutesToStr((totalDist / 35) * 60);
     }
 
-    /* ================= RENDER BẢNG 2 TẦNG HEADER MÀU SẮC PHÂN BIỆT ================= */
     function renderDetailTable(data) {
         const thead = document.getElementById('table-head');
         const tbody = document.getElementById('table-body');
         const tfoot = document.getElementById('table-foot');
 
-        // Tạo cấu trúc 2 dòng cho Header theo đúng chuẩn yêu cầu bôi màu
+        let activeCategories = [];
+        let categoryHasSalesMap = {};
+        categoryList.forEach(cat => { categoryHasSalesMap[cat] = false; });
+
+        data.forEach(row => {
+            let dsDonHangStr = String(row[COL.DS_DON_HANG] || '').toUpperCase().trim();
+            if(dsDonHangStr.includes('PO') && rawOrderData.length > 0) {
+                let listPO = dsDonHangStr.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean); 
+                listPO.forEach(po => {
+                    let orderRows = rawOrderData.filter(or => String(or[COL_EX2.MA_DON_HANG]).toUpperCase().trim() === po);
+                    orderRows.forEach(or => {
+                        let cat = or[COL_EX2.NGANH_HANG];
+                        if (categoryList.includes(cat)) {
+                            let valStr = String(or[COL_EX2.DOANH_SO]).replace(/,/g, '');
+                            if ((parseFloat(valStr) || 0) > 0) categoryHasSalesMap[cat] = true;
+                        }
+                    });
+                });
+            }
+        });
+
+        activeCategories = categoryList.filter(cat => categoryHasSalesMap[cat] === true);
+
+        let lang = langData[curLang];
         let row1_HTML = `
-            <th rowspan="2" class="route-th">Mã KH</th>
-            <th rowspan="2" class="route-th">Tên KH</th>
-            <th rowspan="2" class="route-th">Bắt đầu</th>
-            <th rowspan="2" class="route-th">Kết thúc</th>
-            <th rowspan="2" class="route-th num-right">Khoảng cách đến KH sau (km)</th>
-            <th rowspan="2" class="route-th num-right">TG tại KH (phút)</th>
-            <th rowspan="2" class="route-th num-right">TG Di chuyển (phút)</th>
+            <th rowspan="2" class="route-th">${lang.thCode}</th>
+            <th rowspan="2" class="route-th">${lang.thName}</th>
+            <th rowspan="2" class="route-th">${lang.thStart}</th>
+            <th rowspan="2" class="route-th">${lang.thEnd}</th>
+            <th rowspan="2" class="route-th num-right">${lang.thDist}</th>
+            <th rowspan="2" class="route-th num-right">${lang.thTimeAt}</th>
+            <th rowspan="2" class="route-th num-right">${lang.thTimeMove}</th>
         `;
         
-        if(categoryList.length > 0) {
-            // Merge ô ngành hàng bôi xanh lá nằm phía trên
-            row1_HTML += `<th colspan="${categoryList.length + 1}" class="sales-th">Doanh số theo ngành hàng</th>`;
-        } else {
-            row1_HTML += `<th class="sales-th">Tổng doanh số</th>`;
-        }
+        if(activeCategories.length > 0) row1_HTML += `<th colspan="${activeCategories.length + 1}" class="sales-th">${lang.thSalesCat}</th>`;
+        else row1_HTML += `<th class="sales-th">${lang.thSalesTotal}</th>`;
 
         let row2_HTML = '';
-        categoryList.forEach(cat => {
-            row2_HTML += `<th class="sales-th num-right">DS ${cat}</th>`;
-        });
-        row2_HTML += `<th class="sales-th num-right">Tổng doanh số</th>`;
+        activeCategories.forEach(cat => { row2_HTML += `<th class="sales-th num-right">${lang.thDS}${cat}</th>`; });
+        row2_HTML += `<th class="sales-th num-right">${lang.thSalesTotal}</th>`;
 
-        thead.innerHTML = `<tr>${row1_HTML}</tr>` + (categoryList.length > 0 ? `<tr>${row2_HTML}</tr>` : '');
+        thead.innerHTML = `<tr>${row1_HTML}</tr>` + (activeCategories.length > 0 ? `<tr>${row2_HTML}</tr>` : '');
 
         let totalKHTime = 0, totalMoveTime = 0, totalDist = 0;
-        let catTotals = new Array(categoryList.length).fill(0);
-        let grandTotalSalesAll = 0; // Tính tổng cộng dồn tất cả đơn hàng
+        let catTotals = new Array(activeCategories.length).fill(0);
+        let grandTotalSalesAll = 0; 
 
         tbody.innerHTML = '';
         data.forEach((row, index) => {
@@ -477,24 +578,21 @@
             
             totalKHTime += timeAtKH; totalMoveTime += moveTime;
 
-            let salesByCat = new Array(categoryList.length).fill(0);
-            let rowTotalSales = 0; // Tổng doanh số riêng của dòng này
+            let salesByCat = new Array(activeCategories.length).fill(0);
+            let rowTotalSales = 0; 
 
             let dsDonHangStr = String(row[COL.DS_DON_HANG] || '').toUpperCase().trim();
             if(dsDonHangStr.includes('PO') && rawOrderData.length > 0) {
                 let listPO = dsDonHangStr.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean); 
-                
                 listPO.forEach(po => {
                     let orderRows = rawOrderData.filter(or => String(or[COL_EX2.MA_DON_HANG]).toUpperCase().trim() === po);
                     orderRows.forEach(or => {
-                        let catIdx = categoryList.indexOf(or[COL_EX2.NGANH_HANG]);
+                        let catIdx = activeCategories.indexOf(or[COL_EX2.NGANH_HANG]);
                         if(catIdx >= 0) {
                             let valStr = String(or[COL_EX2.DOANH_SO]).replace(/,/g, '');
                             let val = parseFloat(valStr) || 0;
-                            salesByCat[catIdx] += val;
-                            catTotals[catIdx] += val;
-                            rowTotalSales += val;
-                            grandTotalSalesAll += val;
+                            salesByCat[catIdx] += val; catTotals[catIdx] += val;
+                            rowTotalSales += val; grandTotalSalesAll += val;
                         }
                     });
                 });
@@ -509,24 +607,20 @@
                 <td class="num-right">${formatNum(timeAtKH)}</td>
                 <td class="num-right">${formatNum(moveTime)}</td>
             `;
-            // Render các ô doanh số ngành hàng
             salesByCat.forEach(s => { rowHTML += `<td class="num-right">${formatCurrency(s)}</td>`; });
-            // Ô tổng doanh số của dòng (bên phải cột ngành hàng cuối cùng)
             rowHTML += `<td class="num-right" style="font-weight:bold; background-color:#f8fafc;">${formatCurrency(rowTotalSales)}</td>`;
             
             tr.innerHTML = rowHTML;
             tbody.appendChild(tr);
         });
 
-        // Dòng GRAND TOTAL dưới chân bảng
         let grandTotalHTML = `
-            <td colspan="4" style="text-align:right; font-size:14px;"><b>GRAND TOTAL</b></td>
-            <td class="num-right" style="color:#1e40af; font-size:14px;"><b>${formatNum(totalDist)} km</b></td>
-            <td class="num-right" style="color:#ec4899; font-size:14px;"><b>${formatNum(totalKHTime/60)} giờ</b></td>
-            <td class="num-right" style="color:#64748b; font-size:14px;"><b>${formatNum(totalMoveTime/60)} giờ</b></td>
+            <td colspan="4" style="text-align:right; font-size:14px;"><b>${lang.thGrandTotal}</b></td>
+            <td class="num-right" style="color:#1e40af; font-size:14px;"><b>${formatNum(totalDist)} ${lang.unitKm}</b></td>
+            <td class="num-right" style="color:#ec4899; font-size:14px;"><b>${formatNum(totalKHTime/60)} ${lang.unitHour}</b></td>
+            <td class="num-right" style="color:#64748b; font-size:14px;"><b>${formatNum(totalMoveTime/60)} ${lang.unitHour}</b></td>
         `;
         catTotals.forEach(ct => { grandTotalHTML += `<td class="num-right" style="color:#16a34a; font-size:14px;"><b>${formatCurrency(ct)}</b></td>`; });
-        // Tổng doanh số của toàn bộ ngành hàng
         grandTotalHTML += `<td class="num-right" style="color:#16a34a; font-size:14px; background-color:#e2e8f0;"><b>${formatCurrency(grandTotalSalesAll)}</b></td>`;
         
         let tfRow = document.createElement('tr');
@@ -534,7 +628,7 @@
         tfoot.innerHTML = ''; tfoot.appendChild(tfRow);
     }
 
-    /* ================= CÁC HÀM TIỆN ÍCH TIÊU CHUẨN ================= */
+    // ================= CÁC HÀM TIỆN ÍCH =================
     function resetDashboard() { dashboard.style.display = 'none'; routeLayer.clearLayers(); }
     function timeStrToMinutes(timeStr) {
         if (!timeStr) return 0;
@@ -542,8 +636,8 @@
         return (parseInt(p[0])||0)*60 + (parseInt(p[1])||0) + (parseInt(p[2])||0)/60;
     }
     function minutesToStr(mins) {
-        if (isNaN(mins) || mins <= 0) return "0 giờ 0 phút";
-        return `${Math.floor(mins/60)} giờ ${Math.floor(mins%60)} phút`;
+        if (isNaN(mins) || mins <= 0) return `0 ${langData[curLang].unitHour} 0 ${langData[curLang].unitMinute}`;
+        return `${Math.floor(mins/60)} ${langData[curLang].unitHour} ${Math.floor(mins%60)} ${langData[curLang].unitMinute}`;
     }
     function getHaversine14(lat1, lon1, lat2, lon2) {
         lat1 = parseFloat(lat1); lon1 = parseFloat(lon1); lat2 = parseFloat(lat2); lon2 = parseFloat(lon2);
@@ -555,6 +649,10 @@
     }
     function formatNum(num) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0); }
     function formatCurrency(num) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num || 0); }
+    
+    // Gọi hàm cài đặt ngôn ngữ mặc định (Tiếng Việt)
+    setLang('vi');
+
 </script>
 
 </body>
