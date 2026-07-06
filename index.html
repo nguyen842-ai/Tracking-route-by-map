@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theo Dõi Đi Tuyến Nhân Viên</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f1f5f9;
+        }
+        #app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+        /* Khu vực bên trái 40% */
+        #left-panel {
+            width: 40%;
+            height: 100%;
+            position: relative;
+            border-right: 2px solid #cbd5e1;
+        }
+        #map { width: 100%; height: 100%; background: #e2e8f0; }
+        
+        /* Khu vực bên phải 60% */
+        #right-panel {
+            width: 60%;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            background-color: #ffffff;
+        }
+        
+        .control-group {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+        
+        .control-group h3 { margin-top: 0; color: #1e293b; }
+        
+        .filters {
+            display: flex; gap: 15px; flex-wrap: wrap;
+        }
+        .filter-item { display: flex; flex-direction: column; flex: 1; min-width: 150px; }
+        .filter-item label { font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #475569; }
+        .filter-item select, .filter-item input {
+            padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px;
+        }
+
+        .summary-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .summary-card h2 { margin-top: 0; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-box {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+        }
+        .stat-title { font-size: 13px; color: #64748b; font-weight: bold; margin-bottom: 5px;}
+        .stat-value { font-size: 18px; color: #0f172a; font-weight: bold; }
+
+        /* Custom Marker style */
+        .route-marker {
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <div id="left-panel">
+        <div id="map"></div>
+    </div>
+
+    <div id="right-panel">
+        <div class="control-group">
+            <h3>📂 Nhập Dữ Liệu</h3>
+            <input type="file" id="fileInput" accept=".xlsx, .xls, .csv">
+        </div>
+
+        <div class="control-group">
+            <h3>🔍 Bộ Lọc</h3>
+            <div class="filters">
+                <div class="filter-item">
+                    <label>Tên đơn vị phân phối</label>
+                    <select id="sel-npp"><option value="">-- Chọn NPP --</option></select>
+                </div>
+                <div class="filter-item">
+                    <label>Tên nhân viên</label>
+                    <select id="sel-nv" disabled><option value="">-- Chọn NV --</option></select>
+                </div>
+                <div class="filter-item">
+                    <label>Thứ</label>
+                    <select id="sel-thu" disabled><option value="">-- Chọn Thứ --</option></select>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-card" id="summary-section" style="display: none;">
+            <h2>📊 Bảng Tổng Hợp Tuyến Đường</h2>
+            <div class="stat-grid">
+                <div class="stat-box" style="border-color: #10b981;">
+                    <div class="stat-title">Giờ Check-in (CH đầu tiên)</div>
+                    <div class="stat-value" id="val-checkin">--</div>
+                </div>
+                <div class="stat-box" style="border-color: #ef4444;">
+                    <div class="stat-title">Giờ Check-out (CH cuối cùng)</div>
+                    <div class="stat-value" id="val-checkout">--</div>
+                </div>
+                <div class="stat-box" style="border-color: #8b5cf6;">
+                    <div class="stat-title">Tổng thời gian làm việc</div>
+                    <div class="stat-value" id="val-total-time">--</div>
+                </div>
+                <div class="stat-box" style="border-color: #f59e0b;">
+                    <div class="stat-title">Thời gian làm việc với KH</div>
+                    <div class="stat-value" id="val-kh-time">--</div>
+                </div>
+                <div class="stat-box" style="border-color: #0ea5e9;">
+                    <div class="stat-title">Tổng quãng đường di chuyển</div>
+                    <div class="stat-value" id="val-distance">--</div>
+                </div>
+                <div class="stat-box" style="border-color: #64748b;">
+                    <div class="stat-title">Thời gian di chuyển (v=35km/h)</div>
+                    <div class="stat-value" id="val-move-time">--</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Khởi tạo bản đồ
+    const map = L.map('map').setView([10.8231, 106.6297], 10); // Default: TP.HCM
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    let routeLayer = L.layerGroup().addTo(map);
+
+    // Biến toàn cục lưu dữ liệu
+    let rawData = [];
+    
+    // Cấu hình Cột Index (Dựa trên cấu trúc file CSV cung cấp)
+    const COL = {
+        NPP: 2,        // Cột C: Tên đơn vị phân phối
+        NV: 6,         // Cột G: Tên nhân viên
+        THU: 11,       // Cột L: Thứ
+        STT_GHE: 12,   // Cột M: Thứ tự ghé thăm
+        TIME_IN: 19,   // Cột T: Thời gian bắt đầu
+        TIME_OUT: 20,  // Cột U: Thời gian kết thúc
+        TIME_TOTAL: 21,// Cột V: Tổng thời gian ghé thăm
+        LAT: 30,       // Cột AE: Vĩ độ (Tọa độ ghé thăm)
+        LNG: 31        // Cột AF: Kinh độ
+    };
+
+    const colorMap = {
+        'Thứ 2': '#22c55e', // Xanh lá
+        'Thứ 3': '#ef4444', // Đỏ
+        'Thứ 4': '#a855f7', // Tím
+        'Thứ 5': '#eab308', // Vàng
+        'Thứ 6': '#000000', // Đen
+        'Thứ 7': '#3b82f6'  // Xanh dương
+    };
+
+    // DOM Elements
+    const fileInput = document.getElementById('fileInput');
+    const selNPP = document.getElementById('sel-npp');
+    const selNV = document.getElementById('sel-nv');
+    const selThu = document.getElementById('sel-thu');
+    const summarySection = document.getElementById('summary-section');
+
+    // 1. Xử lý đọc file
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            
+            // Đọc toàn bộ ra mảng 2 chiều
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+            
+            // Lọc chỉ lấy những dòng có số thứ tự (loại bỏ header)
+            rawData = jsonData.filter(row => row[COL.NPP] && row[COL.NV] && !isNaN(parseInt(row[0])));
+            
+            initFilters();
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    // 2. Khởi tạo bộ lọc NPP
+    function initFilters() {
+        let npps = [...new Set(rawData.map(r => r[COL.NPP]))].filter(Boolean);
+        selNPP.innerHTML = '<option value="">-- Chọn NPP --</option>';
+        npps.forEach(npp => selNPP.innerHTML += `<option value="${npp}">${npp}</option>`);
+        
+        selNV.innerHTML = '<option value="">-- Chọn NV --</option>';
+        selNV.disabled = true;
+        selThu.innerHTML = '<option value="">-- Chọn Thứ --</option>';
+        selThu.disabled = true;
+        summarySection.style.display = 'none';
+        routeLayer.clearLayers();
+    }
+
+    // Lọc Nhân Viên theo NPP
+    selNPP.addEventListener('change', () => {
+        const npp = selNPP.value;
+        if (!npp) { selNV.disabled = true; return; }
+        
+        let nvs = [...new Set(rawData.filter(r => r[COL.NPP] === npp).map(r => r[COL.NV]))].filter(Boolean);
+        selNV.innerHTML = '<option value="">-- Chọn NV --</option>';
+        nvs.forEach(nv => selNV.innerHTML += `<option value="${nv}">${nv}</option>`);
+        selNV.disabled = false;
+        selThu.disabled = true;
+    });
+
+    // Lọc Thứ theo NPP & NV
+    selNV.addEventListener('change', () => {
+        const npp = selNPP.value;
+        const nv = selNV.value;
+        if (!nv) { selThu.disabled = true; return; }
+
+        let thus = [...new Set(rawData.filter(r => r[COL.NPP] === npp && r[COL.NV] === nv).map(r => r[COL.THU]))].filter(Boolean);
+        // Sort Thứ 2 -> 7
+        thus.sort((a, b) => a.localeCompare(b));
+        
+        selThu.innerHTML = '<option value="">-- Chọn Thứ --</option>';
+        thus.forEach(thu => selThu.innerHTML += `<option value="${thu}">${thu}</option>`);
+        selThu.disabled = false;
+    });
+
+    // 3. Xử lý khi chọn xong "Thứ" -> Bắt đầu vẽ map & tính toán
+    selThu.addEventListener('change', processRoute);
+
+    function processRoute() {
+        const npp = selNPP.value;
+        const nv = selNV.value;
+        const thu = selThu.value;
+        
+        if (!npp || !nv || !thu) return;
+
+        // Lấy dữ liệu theo bộ lọc & Sắp xếp theo Thứ tự ghé thăm (Cột M)
+        let routeData = rawData.filter(r => r[COL.NPP] === npp && r[COL.NV] === nv && r[COL.THU] === thu);
+        routeData.sort((a, b) => parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]));
+
+        if(routeData.length === 0) return alert("Không có dữ liệu lộ trình!");
+
+        drawMap(routeData, thu);
+        calculateSummary(routeData);
+        summarySection.style.display = 'block';
+    }
+
+    function drawMap(data, thu) {
+        routeLayer.clearLayers();
+        let latlngs = [];
+        let color = colorMap[thu] || '#333';
+
+        data.forEach((row) => {
+            let lat = parseFloat(row[COL.LAT]);
+            let lng = parseFloat(row[COL.LNG]);
+            let stt = row[COL.STT_GHE];
+            
+            if (lat && lng) {
+                latlngs.push([lat, lng]);
+                
+                // Tạo icon ghim
+                let icon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div class="route-marker" style="background-color: ${color};">${stt}</div>`,
+                    iconSize: [26, 26],
+                    iconAnchor: [13, 13]
+                });
+
+                let marker = L.marker([lat, lng], {icon: icon});
+                marker.bindPopup(`<b>${row[15] || 'Cửa hàng'}</b><br>Thứ tự: ${stt}<br>Đến: ${row[COL.TIME_IN] || 'N/A'}`);
+                routeLayer.addLayer(marker);
+            }
+        });
+
+        // Vẽ đường line nối các điểm
+        if (latlngs.length > 1) {
+            let polyline = L.polyline(latlngs, {color: color, weight: 3, opacity: 0.7, dashArray: '5, 5'}).addTo(routeLayer);
+            map.fitBounds(polyline.getBounds(), {padding: [50, 50]});
+        } else if (latlngs.length === 1) {
+            map.setView(latlngs[0], 15);
+        }
+    }
+
+    function calculateSummary(data) {
+        let firstRow = data[0];
+        let lastRow = data[data.length - 1];
+
+        // 1 & 2. Time in / Time out
+        let checkIn = firstRow[COL.TIME_IN] || '00:00:00';
+        let checkOut = lastRow[COL.TIME_OUT] || '00:00:00';
+        
+        document.getElementById('val-checkin').innerText = checkIn;
+        document.getElementById('val-checkout').innerText = checkOut;
+
+        // 3. Tổng thời gian làm việc = Check Out - Check In
+        let totalMins = timeStrToMinutes(checkOut) - timeStrToMinutes(checkIn);
+        if(totalMins < 0) totalMins = 0; // Tránh lỗi qua ngày
+        document.getElementById('val-total-time').innerText = minutesToStr(totalMins);
+
+        // 4. Tổng thời gian làm việc với KH
+        let khTotalMins = 0;
+        data.forEach(r => {
+            khTotalMins += timeStrToMinutes(r[COL.TIME_TOTAL]);
+        });
+        document.getElementById('val-kh-time').innerText = minutesToStr(khTotalMins);
+
+        // 5. Tổng quãng đường
+        let totalDistKm = 0;
+        for(let i = 0; i < data.length - 1; i++) {
+            let lat1 = parseFloat(data[i][COL.LAT]);
+            let lon1 = parseFloat(data[i][COL.LNG]);
+            let lat2 = parseFloat(data[i+1][COL.LAT]);
+            let lon2 = parseFloat(data[i+1][COL.LNG]);
+            if(lat1 && lon1 && lat2 && lon2) {
+                totalDistKm += getHaversineDistance(lat1, lon1, lat2, lon2);
+            }
+        }
+        document.getElementById('val-distance').innerText = totalDistKm.toFixed(2) + " km";
+
+        // 6. Thời gian di chuyển (vận tốc 35km/h)
+        let moveTimeHours = totalDistKm / 35;
+        let moveTimeMins = moveTimeHours * 60;
+        document.getElementById('val-move-time').innerText = minutesToStr(moveTimeMins);
+    }
+
+    // --- Các hàm tiện ích ---
+    
+    // Đổi chuỗi "HH:mm:ss" thành tổng số phút
+    function timeStrToMinutes(timeStr) {
+        if (!timeStr) return 0;
+        let parts = timeStr.toString().trim().split(':');
+        let h = parseInt(parts[0]) || 0;
+        let m = parseInt(parts[1]) || 0;
+        let s = parseInt(parts[2]) || 0;
+        return (h * 60) + m + (s / 60);
+    }
+
+    // Đổi số phút thành chuỗi "X giờ Y phút"
+    function minutesToStr(mins) {
+        if (isNaN(mins) || mins <= 0) return "0 giờ 0 phút";
+        let h = Math.floor(mins / 60);
+        let m = Math.floor(mins % 60);
+        return `${h} giờ ${m} phút`;
+    }
+
+    // Công thức tính khoảng cách đường chim bay giữa 2 tọa độ (Haversine Formula) - Đơn vị: km
+    function getHaversineDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; 
+        const dLat = deg2rad(lat2 - lat1);
+        const dLon = deg2rad(lon2 - lon1);
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    function deg2rad(deg) { return deg * (Math.PI / 180); }
+
+</script>
+
+</body>
+</html>
