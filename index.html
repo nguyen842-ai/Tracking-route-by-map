@@ -209,13 +209,15 @@
     // Cấu hình vị trí cột (Chuẩn đếm từ 0)
     const COL = {
         NPP: 2, NV: 6, THU: 11, STT_GHE: 12, LO_TRINH: 13, MA_KH: 14, TEN_KH: 15,
-        TIME_IN: 19, TIME_OUT: 20, TIME_TOTAL: 21, DS_DON_HANG: 22, LAT: 30, LNG: 31
+        TIME_IN: 19, TIME_OUT: 20, TIME_TOTAL: 21, 
+        DS_DON_HANG: 22, // Cột W (Báo cáo chi tiết ghé thăm)
+        LAT: 30, LNG: 31
     };
     
     const COL_EX2 = {
-        MA_DON_HANG: 16,  // Cột Q (17 trừ 1)
-        NGANH_HANG: 39,   // Cột AN (40 trừ 1)
-        DOANH_SO: 34      // Cột AI (35 trừ 1)
+        MA_DON_HANG: 16,  // Cột Q (Báo cáo chi tiết đơn hàng)
+        NGANH_HANG: 39,   // Cột AN 
+        DOANH_SO: 34      // Cột AI 
     };
 
     const colorMap = {
@@ -227,7 +229,6 @@
     let rawOrderData = [];
     let categoryList = []; 
 
-    // Khởi tạo Map Leaflet
     const map = L.map('map').setView([10.8231, 106.6297], 10);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
     let routeLayer = L.layerGroup().addTo(map);
@@ -252,31 +253,25 @@
             const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
             
             if(type === 1) {
-                // File 1: Ghé thăm
                 rawRouteData = jsonData.filter(row => row[COL.NPP] && row[COL.NV] && !isNaN(parseInt(row[0])));
                 updateFilters();
             } else {
-                // File 2: Đơn hàng
                 rawOrderData = jsonData; 
                 let cats = rawOrderData.map(row => row[COL_EX2.NGANH_HANG]).filter(Boolean);
                 categoryList = [...new Set(cats)].filter(c => c !== "Ngành hàng" && c !== "NGANH_HANG" && c !== "Category");
                 
-                console.log("Đã nạp các Ngành hàng:", categoryList);
-                
-                // Nếu đang hiển thị Dashboard thì tự refresh vẽ lại cột doanh số
                 if(selDay.value) processDataAndRender();
             }
         };
         reader.readAsArrayBuffer(file);
     }
 
-    /* ================= HỆ THỐNG BỘ LỌC TINH GỌN (NPP -> NV -> THỨ) ================= */
+    /* ================= BỘ LỌC ================= */
     function updateFilters() {
         let npps = [...new Set(rawRouteData.map(r => r[COL.NPP]))].filter(Boolean);
         selNPP.innerHTML = '<option value="">-- Chọn NPP --</option>';
         npps.forEach(npp => selNPP.innerHTML += `<option value="${npp}">${npp}</option>`);
         selNPP.disabled = false;
-        
         selNV.innerHTML = '<option value="">-- Chọn Nhân viên --</option>'; selNV.disabled = true;
         selDay.innerHTML = '<option value="">-- Chọn Thứ --</option>'; selDay.disabled = true;
     }
@@ -289,7 +284,6 @@
         selNV.innerHTML = '<option value="">-- Chọn Nhân viên --</option>';
         nvs.forEach(nv => selNV.innerHTML += `<option value="${nv}">${nv}</option>`);
         selNV.disabled = false;
-        
         selDay.innerHTML = '<option value="">-- Chọn Thứ --</option>'; selDay.disabled = true;
     });
 
@@ -298,7 +292,6 @@
         const npp = selNPP.value;
         if (!nv) { resetDashboard(); return; }
         
-        // Thay avatar hình nhân viên
         avatarImg.src = `assets/images/nhanvien/${nv}.PNG`;
 
         let thus = [...new Set(rawRouteData.filter(r => r[COL.NPP] === npp && r[COL.NV] === nv).map(r => r[COL.THU]))].filter(Boolean);
@@ -311,12 +304,11 @@
 
     selDay.addEventListener('change', processDataAndRender);
 
-    /* ================= XỬ LÝ LOGIC CHÍNH & KPI ================= */
+    /* ================= LOGIC CHÍNH ================= */
     function processDataAndRender() {
         const nv = selNV.value;
         const npp = selNPP.value;
         const day = selDay.value;
-
         if (!nv || !npp || !day) return;
 
         let currentRoute = rawRouteData.filter(r => r[COL.NV] === nv && r[COL.NPP] === npp && r[COL.THU] === day);
@@ -327,11 +319,9 @@
         drawMap(currentRoute, day);
         calculateKPIs(currentRoute);
         renderDetailTable(currentRoute);
-        
         dashboard.style.display = 'block';
     }
 
-    /* VẼ ĐƯỜNG ĐI TRÊN BẢN ĐỒ */
     function drawMap(data, day) {
         routeLayer.clearLayers();
         let latlngs = [];
@@ -361,12 +351,11 @@
         }
     }
 
-    /* TÍNH TOÁN CÁC CHỈ SỐ KPI TỪ FILE */
+    /* --- TÍNH TOÁN KPI --- */
     function calculateKPIs(data) {
         let firstR = data[0]; 
         let lastR = data[data.length - 1];
 
-        // Giờ Check-in / Out
         let checkIn = firstR[COL.TIME_IN] || '00:00:00';
         let checkOut = lastR[COL.TIME_OUT] || '00:00:00';
         document.getElementById('kpi-checkin').innerText = checkIn;
@@ -375,44 +364,32 @@
         let workMins = timeStrToMinutes(checkOut) - timeStrToMinutes(checkIn);
         document.getElementById('kpi-totaltime').innerText = minutesToStr(Math.max(0, workMins));
 
-        // Tính Số KH ghé thăm (Tổng, Trong tuyến, Ngoài tuyến)
         let totalVisited = data.length;
         let inRouteCount = 0;
         let outRouteCount = 0;
         let khTimeMins = 0;
-        let orderedKhCount = 0; // Đếm số KH lên đơn thành công
+        let orderedKhCount = 0; 
 
         data.forEach(r => {
-            // Đếm lộ trình
             let loTrinh = (r[COL.LO_TRINH] || '').toString().toLowerCase();
             if(loTrinh.includes('trong')) inRouteCount++;
             else if(loTrinh.includes('ngoài')) outRouteCount++;
             
-            // Tính tổng thời gian tại KH
             khTimeMins += timeStrToMinutes(r[COL.TIME_TOTAL]);
 
-            // Tính xem KH này có lên đơn thành công hay không
+            // LOGIC KPI MỚI: Đếm số khách hàng lên đơn dựa trên việc xuất hiện 'PO' ở cột W
             let dsDonHangStr = (r[COL.DS_DON_HANG] || '').toString().trim();
-            if(dsDonHangStr && rawOrderData.length > 0) {
-                let hasOrderValue = false;
-                let listPO = dsDonHangStr.split(',').map(s => s.trim());
-                listPO.forEach(po => {
-                    let orderRows = rawOrderData.filter(or => String(or[COL_EX2.MA_DON_HANG]).trim() === po);
-                    orderRows.forEach(or => {
-                        if((parseFloat(or[COL_EX2.DOANH_SO]) || 0) > 0) hasOrderValue = true;
-                    });
-                });
-                if(hasOrderValue) orderedKhCount++; // Nếu tổng đơn của KH này > 0 thì cộng 1 khách lên đơn
+            if(dsDonHangStr.includes('PO')) {
+                orderedKhCount++; 
             }
         });
 
         document.getElementById('kpi-total-visited').innerText = totalVisited;
         document.getElementById('sub-in-route').innerText = inRouteCount;
         document.getElementById('sub-out-route').innerText = outRouteCount;
-        document.getElementById('kpi-ordered-kh').innerText = orderedKhCount;
+        document.getElementById('kpi-ordered-kh').innerText = orderedKhCount; // Số KH lên đơn
         document.getElementById('kpi-working-kh').innerText = minutesToStr(khTimeMins);
 
-        // Tính Quãng đường Haversine nhân hệ số 1.4
         let totalDist = 0;
         for(let i = 0; i < data.length - 1; i++) {
             totalDist += getHaversine14(data[i][COL.LAT], data[i][COL.LNG], data[i+1][COL.LAT], data[i+1][COL.LNG]);
@@ -421,13 +398,12 @@
         document.getElementById('kpi-moving-time').innerText = minutesToStr((totalDist / 35) * 60);
     }
 
-    /* VẼ BẢNG CHI TIẾT KÈM DOANH SỐ TỪNG NGÀNH HÀNG */
+    /* --- BẢNG CHI TIẾT --- */
     function renderDetailTable(data) {
         const thead = document.getElementById('table-head-row');
         const tbody = document.getElementById('table-body');
         const tfoot = document.getElementById('table-foot');
 
-        // Render cột cơ bản
         let headersHTML = `
             <th>Mã KH</th>
             <th>Tên KH</th>
@@ -438,16 +414,13 @@
             <th class="num-right">TG Di chuyển (phút)</th>
         `;
         
-        // Ghép thêm các cột Ngành hàng động
-        categoryList.forEach(cat => {
-            headersHTML += `<th class="num-right">DS ${cat}</th>`;
-        });
+        categoryList.forEach(cat => { headersHTML += `<th class="num-right">DS ${cat}</th>`; });
         thead.innerHTML = headersHTML;
 
         let totalKHTime = 0, totalMoveTime = 0, totalDist = 0;
         let catTotals = new Array(categoryList.length).fill(0);
-
         tbody.innerHTML = '';
+
         data.forEach((row, index) => {
             let tr = document.createElement('tr');
             
@@ -462,13 +435,16 @@
             
             totalKHTime += timeAtKH; totalMoveTime += moveTime;
 
-            // Xử lý đối soát mã đơn hàng bốc doanh số ngành hàng
             let salesByCat = new Array(categoryList.length).fill(0);
-            let dsDonHangStr = (row[COL.DS_DON_HANG] || '').toString().trim();
             
-            if(dsDonHangStr && rawOrderData.length > 0) {
-                let listPO = dsDonHangStr.split(',').map(s => s.trim());
+            // LOGIC DOANH SỐ: Lấy chuỗi từ Cột W (Chứa PO) và dò tìm với Cột Q (Báo cáo đơn hàng)
+            let dsDonHangStr = (row[COL.DS_DON_HANG] || '').toString().trim();
+            if(dsDonHangStr.includes('PO') && rawOrderData.length > 0) {
+                // Tách các mã PO ra nếu trong ô có nhiều PO ngăn cách bởi dấu phẩy
+                let listPO = dsDonHangStr.split(',').map(s => s.trim()); 
+                
                 listPO.forEach(po => {
+                    // Match mã PO với Cột Q trong file số 2
                     let orderRows = rawOrderData.filter(or => String(or[COL_EX2.MA_DON_HANG]).trim() === po);
                     orderRows.forEach(or => {
                         let catIdx = categoryList.indexOf(or[COL_EX2.NGANH_HANG]);
@@ -495,7 +471,6 @@
             tbody.appendChild(tr);
         });
 
-        // Hàng GRAND TOTAL dưới cùng
         let grandTotalHTML = `
             <td colspan="4" style="text-align:right; font-size:14px;"><b>GRAND TOTAL</b></td>
             <td class="num-right" style="color:#0ea5e9; font-size:14px;"><b>${formatNum(totalDist)} km</b></td>
@@ -509,7 +484,7 @@
         tfoot.innerHTML = ''; tfoot.appendChild(tfRow);
     }
 
-    /* ================= CÁC HÀM TRỢ NĂNG TÍNH TOÁN ================= */
+    /* ================= CÁC HÀM TRỢ NĂNG ================= */
     function resetDashboard() {
         dashboard.style.display = 'none'; routeLayer.clearLayers();
     }
@@ -520,7 +495,7 @@
     }
     function minutesToStr(mins) {
         if (isNaN(mins) || mins <= 0) return "0 giờ 0 phút";
-        return `${Math.floor(mins/60)} giờ ${Math.floor(mins%60)} minutes`;
+        return `${Math.floor(mins/60)} giờ ${Math.floor(mins%60)} phút`;
     }
     function getHaversine14(lat1, lon1, lat2, lon2) {
         lat1 = parseFloat(lat1); lon1 = parseFloat(lon1); lat2 = parseFloat(lat2); lon2 = parseFloat(lon2);
