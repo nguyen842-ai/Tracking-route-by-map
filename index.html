@@ -90,6 +90,159 @@
             width: 26px; height: 26px; border: 2px solid white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.4); font-size: 12px;
         }
+
+        /* ========== TOAST NOTIFICATION STYLES ========== */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            padding: 14px 18px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 320px;
+            max-width: 450px;
+            animation: slideIn 0.3s ease-out;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        .toast.success {
+            background-color: #10b981;
+            color: white;
+            border-left: 4px solid #059669;
+        }
+
+        .toast.error {
+            background-color: #ef4444;
+            color: white;
+            border-left: 4px solid #dc2626;
+        }
+
+        .toast.info {
+            background-color: #3b82f6;
+            color: white;
+            border-left: 4px solid #2563eb;
+        }
+
+        .toast.warning {
+            background-color: #f59e0b;
+            color: white;
+            border-left: 4px solid #d97706;
+        }
+
+        .toast.loading {
+            background-color: #6b7280;
+            color: white;
+            border-left: 4px solid #4b5563;
+        }
+
+        .toast-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            opacity: 0.95;
+        }
+
+        .toast-close {
+            flex-shrink: 0;
+            cursor: pointer;
+            font-size: 18px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            padding: 0 5px;
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+        }
+
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 0 0 6px 0;
+            animation: progress linear;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes progress {
+            from {
+                width: 100%;
+            }
+            to {
+                width: 0;
+            }
+        }
+
+        .toast.removing {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 <body>
@@ -112,7 +265,7 @@
     <div id="right-panel">
         <div class="filter-header-section">
             <div id="avatar-container">
-                <img id="avatar-img" src="" alt="Avatar" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23cbd5e1\' stroke-width=\'2\'><circle cx=\'12\' cy=\'8\' r=\'4\'/><path d=\'M18 21v-2a4 4 0 0 0-4-4H10a4 4 0 0 0-4 4v2\'/></svg>';">
+                <img id="avatar-img" src="" alt="Avatar" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23cbd5e1\' stroke-width=\'2\'><path d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'></path><circle cx=\'12\' cy=\'7\' r=\'4\'></circle></svg>'">
             </div>
             <div class="filters-wrapper">
                 <div class="filter-row">
@@ -204,16 +357,107 @@
     </div>
 </div>
 
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
 <script>
-    // Cột của File 1 (Ghé thăm) - Các cột này đã ổn định
+    /* ================= TOAST NOTIFICATION SYSTEM ================= */
+    class ToastNotification {
+        constructor() {
+            this.container = document.getElementById('toast-container');
+            this.toasts = new Map();
+        }
+
+        show(options = {}) {
+            const {
+                type = 'info',
+                title = '',
+                message = '',
+                duration = 4000,
+                icon = '',
+                onClose = null
+            } = options;
+
+            const toastId = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            
+            const iconMap = {
+                success: '✓',
+                error: '✕',
+                info: 'ℹ',
+                warning: '⚠',
+                loading: '<div class="spinner"></div>'
+            };
+
+            const toastEl = document.createElement('div');
+            toastEl.className = `toast ${type}`;
+            toastEl.innerHTML = `
+                <div class="toast-icon">${icon || iconMap[type]}</div>
+                <div class="toast-content">
+                    ${title ? `<div class="toast-title">${title}</div>` : ''}
+                    <div class="toast-message">${message}</div>
+                </div>
+                <div class="toast-close">×</div>
+                ${duration > 0 ? `<div class="toast-progress" style="animation-duration: ${duration}ms;"></div>` : ''}
+            `;
+
+            const closeBtn = toastEl.querySelector('.toast-close');
+            closeBtn.addEventListener('click', () => this.remove(toastId));
+
+            toastEl.addEventListener('click', () => this.remove(toastId));
+
+            this.container.appendChild(toastEl);
+            this.toasts.set(toastId, { el: toastEl, onClose });
+
+            if (duration > 0) {
+                setTimeout(() => this.remove(toastId), duration);
+            }
+
+            return toastId;
+        }
+
+        remove(toastId) {
+            const toast = this.toasts.get(toastId);
+            if (!toast) return;
+
+            toast.el.classList.add('removing');
+            setTimeout(() => {
+                toast.el.remove();
+                this.toasts.delete(toastId);
+                if (toast.onClose) toast.onClose();
+            }, 300);
+        }
+
+        success(title, message, duration = 3000) {
+            return this.show({ type: 'success', title, message, duration });
+        }
+
+        error(title, message, duration = 5000) {
+            return this.show({ type: 'error', title, message, duration });
+        }
+
+        info(title, message, duration = 3000) {
+            return this.show({ type: 'info', title, message, duration });
+        }
+
+        warning(title, message, duration = 4000) {
+            return this.show({ type: 'warning', title, message, duration });
+        }
+
+        loading(title, message) {
+            return this.show({ type: 'loading', title, message, duration: 0 });
+        }
+    }
+
+    const toast = new ToastNotification();
+
+    /* ================= CẤUHINH CỘT ================= */
     const COL = {
         NPP: 2, NV: 6, THU: 11, STT_GHE: 12, LO_TRINH: 13, MA_KH: 14, TEN_KH: 15,
         TIME_IN: 19, TIME_OUT: 20, TIME_TOTAL: 21, 
-        DS_DON_HANG: 22, // Cột W chứa mã PO
+        DS_DON_HANG: 22,
         LAT: 30, LNG: 31
     };
     
-    // Khởi tạo vị trí mặc định cho File 2, sẽ được máy tính TỰ ĐỘNG GHI ĐÈ
     let COL_EX2 = {
         MA_DON_HANG: 16, 
         NGANH_HANG: 39,  
@@ -227,7 +471,8 @@
 
     let rawRouteData = [];
     let rawOrderData = [];
-    let categoryList = []; 
+    let categoryList = [];
+    let fileLoadingState = { route: false, order: false };
 
     const map = L.map('map').setView([10.8231, 106.6297], 10);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
@@ -246,58 +491,90 @@
     function handleExcel(e, type) {
         const file = e.target.files[0];
         if (!file) return;
+
+        const fileName = file.name;
+        const loadingToastId = toast.loading(`Đang tải file ${fileName}...`, 'Vui lòng chờ');
+
         const reader = new FileReader();
         reader.onload = (e) => {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
-            
-            // Lấy sheet đầu tiên trong file
-            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
-            
-            if(type === 1) {
-                rawRouteData = jsonData.filter(row => row[COL.NPP] && row[COL.NV] && !isNaN(parseInt(row[0])));
-                updateFilters();
-            } else {
-                rawOrderData = jsonData; 
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+
+                if(!jsonData || jsonData.length === 0) {
+                    throw new Error('File không chứa dữ liệu');
+                }
                 
-                let colPO = -1, colCat = -1, colSales = -1;
-                
-                // MẮT THẦN V2: Dò 100 dòng đầu, làm sạch mọi ký tự ẩn, khoảng trắng kép, dấu Enter
-                for (let i = 0; i < Math.min(100, rawOrderData.length); i++) {
-                    let row = rawOrderData[i];
-                    if(!row) continue;
-                    for (let j = 0; j < row.length; j++) {
-                        // Ép kiểu chữ thường và gộp mọi loại khoảng trắng thành 1 dấu cách duy nhất
-                        let cellVal = String(row[j] || '').toLowerCase().replace(/\s+/g, ' ').trim();
-                        
-                        if (cellVal.includes('mã đơn hàng') || cellVal.includes('mã đh') || cellVal.includes('order') || cellVal === 'po') colPO = j;
-                        if (cellVal.includes('ngành hàng') || cellVal.includes('nhóm hàng') || cellVal.includes('loại hàng') || cellVal.includes('nganh hang') || cellVal.includes('category')) colCat = j;
-                        if (cellVal.includes('thành tiền') || cellVal.includes('doanh số') || cellVal.includes('doanh thu') || cellVal.includes('thanh tien')) colSales = j;
+                if(type === 1) {
+                    rawRouteData = jsonData.filter(row => row[COL.NPP] && row[COL.NV] && !isNaN(parseInt(row[0])));
+                    fileLoadingState.route = true;
+                    
+                    if(rawRouteData.length === 0) {
+                        throw new Error('Không tìm thấy dữ liệu hợp lệ trong file ghé thăm');
                     }
-                }
 
-                // Cập nhật vị trí cột nếu tìm thấy
-                if (colPO !== -1) COL_EX2.MA_DON_HANG = colPO;
-                if (colCat !== -1) COL_EX2.NGANH_HANG = colCat;
-                if (colSales !== -1) COL_EX2.DOANH_SO = colSales;
-
-                // Bốc danh sách Ngành hàng và loại trừ dòng tiêu đề
-                let cats = rawOrderData.map(row => row[COL_EX2.NGANH_HANG]).filter(Boolean);
-                categoryList = [...new Set(cats)].filter(c => {
-                    let strC = String(c).toLowerCase().replace(/\s+/g, ' ').trim();
-                    return !strC.includes("ngành hàng") && !strC.includes("nhóm hàng") && !strC.includes("loại hàng") && !strC.includes("category");
-                });
-                
-                // HIỂN THỊ BÁO CÁO NGAY LẬP TỨC CHO BẠN YÊN TÂM
-                if(categoryList.length > 0) {
-                    alert(`✅ THÀNH CÔNG! Đã nạp file Đơn Hàng:\n- Cột Mã ĐH: ${COL_EX2.MA_DON_HANG + 1}\n- Cột Doanh số: ${COL_EX2.DOANH_SO + 1}\n- Cột Ngành hàng: ${COL_EX2.NGANH_HANG + 1}\n\n👉 Tìm thấy ${categoryList.length} ngành hàng:\n${categoryList.join(', ')}`);
+                    toast.remove(loadingToastId);
+                    toast.success('✅ Thành công', `Đã tải ${rawRouteData.length} bản ghi ghé thăm`, 3000);
+                    updateFilters();
                 } else {
-                    alert(`❌ LỖI: Vẫn không thấy dữ liệu Ngành hàng!\n- Máy tính đang dò ở cột số: ${COL_EX2.NGANH_HANG + 1}.\n- Vui lòng kiểm tra xem Sheet chứa dữ liệu có phải là Sheet đầu tiên trong file không nhé!`);
+                    rawOrderData = jsonData;
+                    fileLoadingState.order = true;
+                    
+                    let colPO = -1, colCat = -1, colSales = -1;
+                    
+                    for (let i = 0; i < Math.min(100, rawOrderData.length); i++) {
+                        let row = rawOrderData[i];
+                        if(!row) continue;
+                        for (let j = 0; j < row.length; j++) {
+                            let cellVal = String(row[j] || '').toLowerCase().replace(/\s+/g, ' ').trim();
+                            
+                            if (cellVal.includes('mã đơn hàng') || cellVal.includes('mã đh') || cellVal.includes('order') || cellVal === 'po') colPO = j;
+                            if (cellVal.includes('ngành hàng') || cellVal.includes('nhóm hàng') || cellVal.includes('loại hàng')) colCat = j;
+                            if (cellVal.includes('thành tiền') || cellVal.includes('doanh số') || cellVal.includes('doanh thu')) colSales = j;
+                        }
+                    }
+
+                    if (colPO !== -1) COL_EX2.MA_DON_HANG = colPO;
+                    if (colCat !== -1) COL_EX2.NGANH_HANG = colCat;
+                    if (colSales !== -1) COL_EX2.DOANH_SO = colSales;
+
+                    let cats = rawOrderData.map(row => row[COL_EX2.NGANH_HANG]).filter(Boolean);
+                    categoryList = [...new Set(cats)].filter(c => {
+                        let strC = String(c).toLowerCase().replace(/\s+/g, ' ').trim();
+                        return !strC.includes("ngành hàng") && !strC.includes("nhóm hàng") && !strC.includes("loại hàng");
+                    });
+                    
+                    toast.remove(loadingToastId);
+
+                    if(categoryList.length > 0) {
+                        toast.success(
+                            '✅ Nhận diện thành công',
+                            `Tìm thấy ${categoryList.length} ngành hàng • Mã ĐH: Cột ${COL_EX2.MA_DON_HANG + 1} • Doanh số: Cột ${COL_EX2.DOANH_SO + 1}`,
+                            3000
+                        );
+                    } else {
+                        toast.warning(
+                            '⚠️ Cảnh báo',
+                            `Không tìm thấy dữ liệu ngành hàng ở cột ${COL_EX2.NGANH_HANG + 1}. Vui lòng kiểm tra file`,
+                            5000
+                        );
+                    }
+                    
+                    if(selDay.value) processDataAndRender();
                 }
-                
-                if(selDay.value) processDataAndRender();
+            } catch (error) {
+                console.error('Excel processing error:', error);
+                toast.remove(loadingToastId);
+                toast.error('❌ Lỗi', `${error.message || 'Không thể đọc file Excel'}`, 5000);
             }
         };
+
+        reader.onerror = () => {
+            toast.remove(loadingToastId);
+            toast.error('❌ Lỗi đọc file', 'Vui lòng thử lại', 4000);
+        };
+
         reader.readAsArrayBuffer(file);
     }
 
@@ -349,12 +626,28 @@
         let currentRoute = rawRouteData.filter(r => r[COL.NV] === nv && r[COL.NPP] === npp && r[COL.THU] === day);
         currentRoute.sort((a, b) => parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]));
 
-        if (currentRoute.length === 0) return alert("Không tìm thấy lộ trình phù hợp!");
+        if (currentRoute.length === 0) {
+            toast.warning('⚠️ Không tìm thấy', 'Lộ trình không tồn tại', 3000);
+            return;
+        }
 
-        drawMap(currentRoute, day);
-        calculateKPIs(currentRoute);
-        renderDetailTable(currentRoute);
-        dashboard.style.display = 'block';
+        const processingToastId = toast.loading('Đang xử lý dữ liệu...', 'Vui lòng chờ');
+        
+        setTimeout(() => {
+            try {
+                drawMap(currentRoute, day);
+                calculateKPIs(currentRoute);
+                renderDetailTable(currentRoute);
+                dashboard.style.display = 'block';
+                
+                toast.remove(processingToastId);
+                toast.success('✅ Hoàn tất', `Đã tải ${currentRoute.length} điểm ghé thăm`, 3000);
+            } catch (error) {
+                toast.remove(processingToastId);
+                toast.error('❌ Lỗi xử lý', error.message, 5000);
+                console.error(error);
+            }
+        }, 300);
     }
 
     function drawMap(data, day) {
@@ -406,7 +699,6 @@
             
             khTimeMins += timeStrToMinutes(r[COL.TIME_TOTAL]);
 
-            // KIỂM TRA CHỮ PO BẰNG ÉP KIỂU STRING & UPPERCASE
             let dsDonHangStr = String(r[COL.DS_DON_HANG] || '').toUpperCase().trim();
             if(dsDonHangStr.includes('PO')) {
                 orderedKhCount++; 
@@ -465,20 +757,16 @@
 
             let salesByCat = new Array(categoryList.length).fill(0);
             
-            // XỬ LÝ SẠCH CHUỖI PO ĐỂ KHỚP 100%
             let dsDonHangStr = String(row[COL.DS_DON_HANG] || '').toUpperCase().trim();
             
             if(dsDonHangStr.includes('PO') && rawOrderData.length > 0) {
-                // Tách PO bằng mọi loại ngắt dòng, dấu phẩy, dấu chấm phẩy
                 let listPO = dsDonHangStr.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean); 
                 
                 listPO.forEach(po => {
-                    // Đối soát mã PO 2 bên (Ép kiểu viết hoa, cắt khoảng trắng để triệt tiêu lỗi mắt thường)
                     let orderRows = rawOrderData.filter(or => String(or[COL_EX2.MA_DON_HANG]).toUpperCase().trim() === po);
                     orderRows.forEach(or => {
                         let catIdx = categoryList.indexOf(or[COL_EX2.NGANH_HANG]);
                         if(catIdx >= 0) {
-                            // Ép kiểu số, lọc bỏ cả dấu phẩy phòng trường hợp số tiền bị dính text
                             let valStr = String(or[COL_EX2.DOANH_SO]).replace(/,/g, '');
                             let val = parseFloat(valStr) || 0;
                             salesByCat[catIdx] += val;
