@@ -250,6 +250,8 @@
         reader.onload = (e) => {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, {type: 'array'});
+            
+            // Lấy sheet đầu tiên trong file
             const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
             
             if(type === 1) {
@@ -258,34 +260,40 @@
             } else {
                 rawOrderData = jsonData; 
                 
-                // MẮT THẦN: Dò 20 dòng đầu tiên để tự động tìm Cột
                 let colPO = -1, colCat = -1, colSales = -1;
-                for (let i = 0; i < Math.min(20, rawOrderData.length); i++) {
+                
+                // MẮT THẦN V2: Dò 100 dòng đầu, làm sạch mọi ký tự ẩn, khoảng trắng kép, dấu Enter
+                for (let i = 0; i < Math.min(100, rawOrderData.length); i++) {
                     let row = rawOrderData[i];
                     if(!row) continue;
                     for (let j = 0; j < row.length; j++) {
-                        let cellVal = String(row[j] || '').trim().toLowerCase();
-                        if (cellVal.includes('MÃ ĐƠN ĐẶT HÀNG')) colPO = j;
-                        if (cellVal.includes('NGÀNH HÀNG')) colCat = j;
-                        if (cellVal.includes('CHƯA VAT') || cellVal.includes('doanh số')) colSales = j;
+                        // Ép kiểu chữ thường và gộp mọi loại khoảng trắng thành 1 dấu cách duy nhất
+                        let cellVal = String(row[j] || '').toLowerCase().replace(/\s+/g, ' ').trim();
+                        
+                        if (cellVal.includes('mã đơn hàng') || cellVal.includes('mã đh') || cellVal.includes('order') || cellVal === 'po') colPO = j;
+                        if (cellVal.includes('ngành hàng') || cellVal.includes('nhóm hàng') || cellVal.includes('loại hàng') || cellVal.includes('nganh hang') || cellVal.includes('category')) colCat = j;
+                        if (cellVal.includes('thành tiền') || cellVal.includes('doanh số') || cellVal.includes('doanh thu') || cellVal.includes('thanh tien')) colSales = j;
                     }
                 }
 
-                // Ghi đè cấu hình nếu tìm thấy
+                // Cập nhật vị trí cột nếu tìm thấy
                 if (colPO !== -1) COL_EX2.MA_DON_HANG = colPO;
                 if (colCat !== -1) COL_EX2.NGANH_HANG = colCat;
                 if (colSales !== -1) COL_EX2.DOANH_SO = colSales;
 
-                console.log(`Đã Auto-detect: Mã ĐH ở cột ${colPO}, Ngành hàng ở cột ${colCat}, Thành tiền ở cột ${colSales}`);
-
-                // Lọc danh sách Ngành hàng an toàn
+                // Bốc danh sách Ngành hàng và loại trừ dòng tiêu đề
                 let cats = rawOrderData.map(row => row[COL_EX2.NGANH_HANG]).filter(Boolean);
                 categoryList = [...new Set(cats)].filter(c => {
-                    let strC = String(c).toLowerCase();
-                    return !strC.includes("ngành hàng") && !strC.includes("category");
+                    let strC = String(c).toLowerCase().replace(/\s+/g, ' ').trim();
+                    return !strC.includes("ngành hàng") && !strC.includes("nhóm hàng") && !strC.includes("loại hàng") && !strC.includes("category");
                 });
                 
-                if(categoryList.length === 0) alert("Cảnh báo: Không thể nhận diện được các cột ngành hàng. File Excel đơn hàng có thể bị lỗi định dạng!");
+                // HIỂN THỊ BÁO CÁO NGAY LẬP TỨC CHO BẠN YÊN TÂM
+                if(categoryList.length > 0) {
+                    alert(`✅ THÀNH CÔNG! Đã nạp file Đơn Hàng:\n- Cột Mã ĐH: ${COL_EX2.MA_DON_HANG + 1}\n- Cột Doanh số: ${COL_EX2.DOANH_SO + 1}\n- Cột Ngành hàng: ${COL_EX2.NGANH_HANG + 1}\n\n👉 Tìm thấy ${categoryList.length} ngành hàng:\n${categoryList.join(', ')}`);
+                } else {
+                    alert(`❌ LỖI: Vẫn không thấy dữ liệu Ngành hàng!\n- Máy tính đang dò ở cột số: ${COL_EX2.NGANH_HANG + 1}.\n- Vui lòng kiểm tra xem Sheet chứa dữ liệu có phải là Sheet đầu tiên trong file không nhé!`);
+                }
                 
                 if(selDay.value) processDataAndRender();
             }
