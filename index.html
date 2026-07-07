@@ -148,8 +148,8 @@
 
     <div id="right-panel">
         <div class="lang-switcher">
-            <button id="btn-lang-vi" class="lang-btn active" onclick="setLang('vi')">🇻🇳 VI</button>
-            <button id="btn-lang-en" class="lang-btn" onclick="setLang('en')">🇬🇧 EN</button>
+            <button id="btn-lang-vi" class="lang-btn active" onclick="setLang('vi')">VI</button>
+            <button id="btn-lang-en" class="lang-btn" onclick="setLang('en')">EN</button>
         </div>
 
         <div class="filter-header-section">
@@ -250,32 +250,24 @@
             pageTitle: "Theo Dõi Đi Tuyến Nhân Viên", warningTitle: "Báo cáo chi tiết ghé thăm khách hàng",
             btnLoad: "📥 Tải Dữ Liệu", lblRoute: "1. Dữ liệu ghé thăm:", lblOrder: "2. Dữ liệu đơn hàng:",
             statusEmpty: "(Chưa tải)", statusLoading: "⌛ Đang xử lý...", statusDone: "✅ Đã tải xong", statusError: "❌ Lỗi tải file",
-            
             filterTitle: "Bộ Lọc", lblNPP: "Đơn vị PP", optNPP: "-- Chọn NPP --", lblNV: "Nhân viên", optNV: "-- Chọn Nhân viên --", lblDay: "Thứ (Day)", optDay: "-- Chọn Thứ --",
-            
             kpiHeader: "📊 Bảng Tổng Hợp Tuyến Đường", kpiCheckin: "Giờ Check-in (KH đầu tiên)", kpiCheckout: "Giờ Check-out (KH cuối cùng)", kpiTotalTime: "Tổng thời gian làm việc",
             kpiTotalVisit: "Số KH đã ghé thăm (Tổng)", kpiInRoute: "Trong tuyến ghé:", kpiOutRoute: "Ngoài tuyến ghé:", kpiOrdered: "Số KH lên đơn thành công", kpiWorkTime: "Thời gian làm việc với KH",
             kpiDist: "Tổng quãng đường", kpiMoveTime: "Thời gian di chuyển", kpiRest: "Thời gian nghỉ trưa", valRest: "1 giờ 0 phút",
-            
             tableTitle: "📋 Chi Tiết Ghé Thăm & Doanh Số", thCode: "Mã KH", thName: "Tên KH", thStart: "Thời điểm Bắt đầu", thEnd: "Thời điểm Kết thúc", thDist: "Khoảng cách đến KH kế tiếp (km)", thTimeAt: "Thời gian làm việc tại KH (phút)", thTimeMove: "Thời gian Di chuyển đến KH kế tiếp (phút)",
             thSalesCat: "Doanh số theo ngành hàng", thSalesTotal: "Tổng doanh số", thDS: "DS ", thGrandTotal: "GRAND TOTAL",
-            
             unitHour: "giờ", unitMinute: "phút", unitKm: "km", alertNoRoute: "Không tìm thấy lộ trình phù hợp!"
         },
         en: {
             pageTitle: "Employee Route Tracking", warningTitle: "Customer Visit Detail Report",
             btnLoad: "📥 Load Data", lblRoute: "1. Visit Data:", lblOrder: "2. Order Data:",
             statusEmpty: "(Not loaded)", statusLoading: "⌛ Loading...", statusDone: "✅ Done", statusError: "❌ Fetch Error",
-            
             filterTitle: "Filters", lblNPP: "Distributor", optNPP: "-- Select Distributor --", lblNV: "Employee", optNV: "-- Select Employee --", lblDay: "Day", optDay: "-- Select Day --",
-            
             kpiHeader: "📊 Route Summary Dashboard", kpiCheckin: "Check-in Time (First store)", kpiCheckout: "Check-out Time (Last store)", kpiTotalTime: "Total Working Time",
             kpiTotalVisit: "Total Visited Customers", kpiInRoute: "In-route:", kpiOutRoute: "Out-of-route:", kpiOrdered: "Successful Cus Ordered", kpiWorkTime: "Time spent with Customers",
             kpiDist: "Total Distance", kpiMoveTime: "Moving Time", kpiRest: "Lunch Break", valRest: "1 hour 0 minutes",
-            
-            tableTitle: "📋 Visit & Sales Details", thCode: "Cust. Code", thName: "Cust. Name", thStart: "Start", thEnd: "End", thDist: "Distance to next cus (km)", thTimeAt: "Time at store (mins)", thTimeMove: "Moving time to next cus (mins)",
+            tableTitle: "📋 Visit & Sales Details", thCode: "Cust. Code", thName: "Cust. Name", thStart: "Start", thEnd: "End", thDist: "Distance to next java (km)", thTimeAt: "Time at store (mins)", thTimeMove: "Moving time to next cus (mins)",
             thSalesCat: "Sales by Category", thSalesTotal: "Total Sales", thDS: "Sales ", thGrandTotal: "GRAND TOTAL",
-            
             unitHour: "hrs", unitMinute: "mins", unitKm: "km", alertNoRoute: "No matching route found!"
         }
     };
@@ -311,14 +303,16 @@
     }
 
     // ================= CẤU HÌNH BẢO MẬT SUPABASE =================
-    const SUPABASE_URL = 'https://mrqldgcycwovpbmzdeuyz.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_itZfZBVw7bxE184tGh7x8A_0_r-QB5p';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_URL = 'https://mrqldgycwovpbmzdeuyz.supabase.co';
+    // ⚠️ LƯU Ý: Hãy dán chuỗi Anon Key JWT chuẩn (Bắt đầu bằng eyJ...) của dự án bạn vào đây nhé!
+    const SUPABASE_ANON_KEY = 'sb_publishable_itZfZBVw7bxE184tGh7x8A_0_r-QB5p'; 
+    
+    // Đổi tên biến tránh xung đột định danh hệ thống
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const BUCKET_NAME = 'mappingdata';
     const FILE_ROUTE = 'map.xlsx';
     const FILE_ORDER = 'dh.xlsx';
-    // 🛑 THAY LINK TRANG HUB CỦA BẠN VÀO ĐÂY:
     const HUB_URL = 'https://nguyen842-ai.github.io/Tong-hop-bao-cao/';
 
     // CẤU HÌNH FILE
@@ -357,7 +351,7 @@
 
         try {
             // 1. Kiểm tra Session đăng nhập
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) {
                 alert("Phiên làm việc hết hạn hoặc chưa đăng nhập. Đang chuyển về Trang Hub...");
                 window.location.href = HUB_URL;
@@ -365,7 +359,7 @@
             }
 
             // 2. Lấy link bảo mật cho 2 file Excel
-            const { data: signedUrls, error } = await supabase.storage
+            const { data: signedUrls, error } = await supabaseClient.storage
                 .from(BUCKET_NAME)
                 .createSignedUrls([FILE_ROUTE, FILE_ORDER], 60);
 
