@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Theo Dõi Đi Tuyến </title>
+    <title id="page-title">Theo Dõi Đi Tuyến</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -266,13 +266,35 @@
             kpiHeader: "📊 Route Summary Dashboard", kpiCheckin: "Check-in Time (First store)", kpiCheckout: "Check-out Time (Last store)", kpiTotalTime: "Total Working Time",
             kpiTotalVisit: "Total Visited Customers", kpiInRoute: "In-route:", kpiOutRoute: "Out-of-route:", kpiOrdered: "Successful Cus Ordered", kpiWorkTime: "Time spent with Customers",
             kpiDist: "Total Distance", kpiMoveTime: "Moving Time", kpiRest: "Lunch Break", valRest: "1 hour 0 minutes",
-            tableTitle: "📋 Visit & Sales Details", thCode: "Cust. Code", thName: "Cust. Name", thStart: "Start", thEnd: "End", thDist: "Distance to next java (km)", thTimeAt: "Time at store (mins)", thTimeMove: "Moving time to next cus (mins)",
+            tableTitle: "📋 Visit & Sales Details", thCode: "Cust. Code", thName: "Cust. Name", thStart: "Start", thEnd: "End", thDist: "Distance to next customer (km)", thTimeAt: "Time at store (mins)", thTimeMove: "Moving time to next cus (mins)",
             thSalesCat: "Sales by Category", thSalesTotal: "Total Sales", thDS: "Sales ", thGrandTotal: "GRAND TOTAL",
             unitHour: "hrs", unitMinute: "mins", unitKm: "km", alertNoRoute: "No matching route found!"
         }
     };
 
     let curLang = 'vi';
+
+    // Trạng thái tải dữ liệu được theo dõi riêng biệt cho từng file
+    // ('idle' | 'loading' | 'done' | 'error')
+    let loadStatus = { route: 'idle', order: 'idle' };
+
+    function renderStatusBadge(elId, statusKey) {
+        const el = document.getElementById(elId);
+        const lang = langData[curLang];
+        const map = {
+            idle:    { text: lang.statusEmpty,   color: '#64748b', bold: false },
+            loading: { text: lang.statusLoading, color: '#ea580c', bold: true },
+            done:    { text: lang.statusDone,    color: '#16a34a', bold: true },
+            error:   { text: lang.statusError,   color: '#dc2626', bold: true }
+        };
+        const s = map[statusKey] || map.idle;
+        el.innerHTML = `<span style="color:${s.color};${s.bold ? ' font-weight:bold;' : ''}">${s.text}</span>`;
+    }
+
+    function refreshStatusBadges() {
+        renderStatusBadge('statusRoute', loadStatus.route);
+        renderStatusBadge('statusOrder', loadStatus.order);
+    }
 
     function setLang(lang) {
         curLang = lang;
@@ -289,22 +311,19 @@
         if (!selNV.value && selNV.options.length > 0) selNV.options[0].text = langData[curLang].optNV;
         if (!selDay.value && selDay.options.length > 0) selDay.options[0].text = langData[curLang].optDay;
 
-        const stRoute = document.getElementById('statusRoute');
-        const stOrder = document.getElementById('statusOrder');
-        if (rawRouteData.length === 0) {
-            stRoute.innerHTML = `<span style="color:#64748b;">${langData[curLang].statusEmpty}</span>`;
-            stOrder.innerHTML = `<span style="color:#64748b;">${langData[curLang].statusEmpty}</span>`;
-        } else {
-            stRoute.innerHTML = `<span style="color:#16a34a; font-weight:bold;">${langData[curLang].statusDone}</span>`;
-            stOrder.innerHTML = `<span style="color:#16a34a; font-weight:bold;">${langData[curLang].statusDone}</span>`;
-        }
+        // FIX: mỗi ô trạng thái (Route / Order) được vẽ lại độc lập theo
+        // trạng thái thực tế của chính nó, thay vì suy đoán chung từ rawRouteData.
+        refreshStatusBadges();
 
         if (selDay.value) processDataAndRender();
     }
 
     // ================= CẤU HÌNH BẢO MẬT SUPABASE =================
     const SUPABASE_URL = 'https://mrqldgycwovpbmzdeuyz.supabase.co';
-    // ⚠️ LƯU Ý: Hãy dán chuỗi Anon Key JWT chuẩn (Bắt đầu bằng eyJ...) của dự án bạn vào đây nhé!
+    // ⚠️ LƯU Ý: Key bên dưới là "publishable key" (định dạng mới, bắt đầu bằng
+    // sb_publishable_...) của Supabase, không phải Anon JWT cũ (eyJ...).
+    // SDK v2 hỗ trợ cả hai định dạng. Nếu dự án của bạn dùng Anon JWT, hãy
+    // thay bằng chuỗi bắt đầu eyJ... tương ứng.
     const SUPABASE_ANON_KEY = 'sb_publishable_itZfZBVw7bxE184tGh7x8A_0_r-QB5p'; 
     
     // Đổi tên biến tránh xung đột định danh hệ thống
@@ -342,12 +361,10 @@
     async function loadDataFromSupabase() {
         const btn = document.getElementById('btnLoadData');
         btn.disabled = true;
-        
-        const statusRoute = document.getElementById('statusRoute');
-        const statusOrder = document.getElementById('statusOrder');
-        
-        statusRoute.innerHTML = `<span style="color:#ea580c; font-weight:bold;">${langData[curLang].statusLoading}</span>`;
-        statusOrder.innerHTML = `<span style="color:#ea580c; font-weight:bold;">${langData[curLang].statusLoading}</span>`;
+
+        loadStatus.route = 'loading';
+        loadStatus.order = 'loading';
+        refreshStatusBadges();
 
         try {
             // 1. Kiểm tra Session đăng nhập
@@ -377,7 +394,10 @@
             let wbRoute = XLSX.read(arrRoute, {type: 'array'});
             let jsonRoute = XLSX.utils.sheet_to_json(wbRoute.Sheets[wbRoute.SheetNames[0]], {header: 1});
             rawRouteData = jsonRoute.filter(row => row[COL.NPP] && row[COL.NV] && !isNaN(parseInt(row[0])));
-            statusRoute.innerHTML = `<span style="color:#16a34a; font-weight:bold;">${langData[curLang].statusDone}</span>`;
+            // FIX: cập nhật trạng thái riêng cho Route ngay khi thành công,
+            // không gộp chung với trạng thái của Order.
+            loadStatus.route = 'done';
+            refreshStatusBadges();
 
             // 4. Tải và đọc file Excel thứ hai (ORDER)
             let resOrder = await fetch(urlOrderSigned);
@@ -409,7 +429,9 @@
                 return !strC.includes("ngành hàng") && !strC.includes("nhóm hàng") && !strC.includes("loại hàng") && !strC.includes("category");
             });
             
-            statusOrder.innerHTML = `<span style="color:#16a34a; font-weight:bold;">${langData[curLang].statusDone}</span>`;
+            // FIX: chỉ đánh dấu Order 'done' khi thực sự tải & xử lý xong.
+            loadStatus.order = 'done';
+            refreshStatusBadges();
             
             // Update UI
             updateFilters();
@@ -417,8 +439,11 @@
 
         } catch (err) {
             console.error("Lỗi:", err);
-            statusRoute.innerHTML = `<span style="color:#dc2626; font-weight:bold;">${langData[curLang].statusError}</span>`;
-            statusOrder.innerHTML = `<span style="color:#dc2626; font-weight:bold;">${langData[curLang].statusError}</span>`;
+            // FIX: chỉ set 'error' cho phần chưa hoàn thành ('loading'),
+            // không ghi đè trạng thái 'done' của phần đã tải thành công trước đó.
+            if (loadStatus.route === 'loading') loadStatus.route = 'error';
+            if (loadStatus.order === 'loading') loadStatus.order = 'error';
+            refreshStatusBadges();
             alert("Lỗi tải dữ liệu. Vui lòng kiểm tra lại quyền truy cập hoặc đăng nhập lại.");
         } finally {
             btn.disabled = false;
@@ -479,7 +504,7 @@
         routeLayer.clearLayers(); let latlngs = []; let color = colorMap[day] || '#3b82f6';
         data.forEach((row) => {
             let lat = parseFloat(row[COL.LAT]); let lng = parseFloat(row[COL.LNG]); let stt = row[COL.STT_GHE];
-            if (lat && lng) {
+            if (!isNaN(lat) && !isNaN(lng)) {
                 latlngs.push([lat, lng]);
                 let icon = L.divIcon({
                     className: 'custom-div-icon',
@@ -661,7 +686,10 @@
     }
     function getHaversine14(lat1, lon1, lat2, lon2) {
         lat1 = parseFloat(lat1); lon1 = parseFloat(lon1); lat2 = parseFloat(lat2); lon2 = parseFloat(lon2);
-        if(!lat1 || !lon1 || !lat2 || !lon2) return 0;
+        // FIX: dùng isNaN() thay vì falsy-check (!lat1 ...), vì falsy-check coi
+        // tọa độ hợp lệ bằng 0 là "thiếu dữ liệu" và làm mất khoảng cách một
+        // cách âm thầm. isNaN() chỉ loại các giá trị thực sự không phải số.
+        if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) return 0;
         const R = 6371; 
         const dLat = (lat2 - lat1) * (Math.PI / 180); const dLon = (lon2 - lon1) * (Math.PI / 180);
         const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
