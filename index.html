@@ -473,7 +473,7 @@
     selNV.addEventListener('change', () => {
         const nv = selNV.value; const npp = selNPP.value;
         if (!nv) { resetDashboard(); return; }
-        avatarImg.src = `assets/images/nhanvien/${nv}.PNG`;
+        avatarImg.src = `New folder/images/nhanvien/${nv}.PNG`;
 
         let thus = [...new Set(rawRouteData.filter(r => r[COL.NPP] === npp && r[COL.NV] === nv).map(r => r[COL.THU]))].filter(Boolean);
         thus.sort((a, b) => a.localeCompare(b));
