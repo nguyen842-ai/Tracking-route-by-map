@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -68,78 +67,74 @@
         }
         .lang-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
 
-      /* Khu vực Bộ lọc & Ảnh đại diện */
-.filter-header-section {
-    display: flex; 
-    margin-bottom: 20px; 
-    background: #f8fafc;
-    padding: 15px; 
-    border-radius: 8px; 
-    border: 1px solid #e2e8f0; 
-    margin-top: 30px;
-}
+        /* Khu vực Bộ lọc & Ảnh đại diện */
+        .filter-header-section {
+            display: flex; 
+            margin-bottom: 20px; 
+            background: #f8fafc;
+            padding: 15px; 
+            border-radius: 8px; 
+            border: 1px solid #e2e8f0; 
+            margin-top: 30px;
+        }
 
-#avatar-container {
-    /* 1. Tăng kích thước khu vực ảnh ở đây */
-    width: 150px;  /* Cũ: 100px */
-    height: 180px; /* Cũ: 120px */
-    margin-right: 20px; 
-    border: 2px dashed #cbd5e1;
-    border-radius: 8px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    background-color: #fff; 
-    overflow: hidden;
-    /* Thêm thuộc tính này để ảnh không bị bóp méo khi màn hình thu nhỏ */
-    flex-shrink: 0; 
-}
+        #avatar-container {
+            width: 150px;  
+            height: 180px; 
+            margin-right: 20px; 
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            background-color: #fff; 
+            overflow: hidden;
+            flex-shrink: 0; 
+        }
 
-#avatar-container img { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
-}
+        #avatar-container img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
 
-.filters-wrapper { 
-    flex-grow: 1; 
-}
+        .filters-wrapper { 
+            flex-grow: 1; 
+        }
 
-.filter-row { 
-    display: flex; 
-    align-items: center; 
-    gap: 15px; 
-    margin-bottom: 15px; 
-}
+        .filter-row { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            margin-bottom: 15px; 
+        }
 
-.filter-row h3 { 
-    margin: 0; 
-    min-width: 100px; 
-    color: #1e293b; 
-}
+        .filter-row h3 { 
+            margin: 0; 
+            min-width: 100px; 
+            color: #1e293b; 
+        }
 
-.filter-item { 
-    display: flex; 
-    flex-direction: column; 
-    /* 2. Thay đổi cách giãn của bộ lọc */
-    /* Thay vì flex: 1 (giãn hết cỡ), ta giới hạn độ rộng tối đa */
-    flex: 0 1 200px; /* Giới hạn chiều rộng mỗi bộ lọc khoảng 200px */
-}
+        .filter-item { 
+            display: flex; 
+            flex-direction: column; 
+            flex: 0 1 200px; 
+        }
 
-.filter-item label { 
-    font-size: 13px; 
-    font-weight: bold; 
-    margin-bottom: 5px; 
-    color: #475569; 
-}
+        .filter-item label { 
+            font-size: 13px; 
+            font-weight: bold; 
+            margin-bottom: 5px; 
+            color: #475569; 
+        }
 
-.filter-item select { 
-    padding: 8px; 
-    border: 1px solid #cbd5e1; 
-    border-radius: 4px; 
-    font-size: 14px; 
-    width: 100%; 
-}
+        .filter-item select { 
+            padding: 8px; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            width: 100%; 
+        }
 
         /* Bảng Thống kê KPI */
         .summary-card { margin-bottom: 20px; }
@@ -178,8 +173,9 @@
 <div id="app-container">
     <div id="left-panel">
         <div id="upload-section">
-            <div class="upload-warning" data-i18n="warningTitle">
-                Báo cáo chi tiết ghé thăm khách hàng
+            <div class="upload-warning">
+                <div data-i18n="warningTitle">Báo cáo chi tiết ghé thăm khách hàng</div>
+                <div id="report-time" style="font-size: 13px; font-weight: normal; text-transform: none; margin-top: 5px; color: #1e293b;"></div>
             </div>
             
             <button id="btnLoadData" class="btn-primary" onclick="loadDataFromSupabase()" data-i18n="btnLoad">
@@ -309,7 +305,8 @@
             kpiDist: "Tổng quãng đường", kpiMoveTime: "Thời gian di chuyển", kpiRest: "Thời gian nghỉ trưa", valRest: "1 giờ 0 phút",
             tableTitle: "📋 Chi Tiết Ghé Thăm & Doanh Số", thCode: "Mã KH", thName: "Tên KH", thStart: "Thời điểm Bắt đầu", thEnd: "Thời điểm Kết thúc", thDist: "Khoảng cách đến KH kế tiếp (km)", thTimeAt: "Thời gian làm việc tại KH (phút)", thTimeMove: "Thời gian Di chuyển đến KH kế tiếp (phút)",
             thSalesCat: "Doanh số theo ngành hàng", thSalesTotal: "Tổng doanh số", thDS: "DS ", thGrandTotal: "GRAND TOTAL",
-            unitHour: "giờ", unitMinute: "phút", unitKm: "km", alertNoRoute: "Không tìm thấy lộ trình phù hợp!"
+            unitHour: "giờ", unitMinute: "phút", unitKm: "km", alertNoRoute: "Không tìm thấy lộ trình phù hợp!",
+            lblTime: "Thời gian: " // Thêm nhãn tiếng Việt
         },
         en: {
             pageTitle: "Employee Route Tracking", warningTitle: "Customer Visit Detail Report",
@@ -321,11 +318,13 @@
             kpiDist: "Total Distance", kpiMoveTime: "Moving Time", kpiRest: "Lunch Break", valRest: "1 hour 0 minutes",
             tableTitle: "📋 Visit & Sales Details", thCode: "Cust. Code", thName: "Cust. Name", thStart: "Start", thEnd: "End", thDist: "Distance to next customer (km)", thTimeAt: "Time at store (mins)", thTimeMove: "Moving time to next cus (mins)",
             thSalesCat: "Sales by Category", thSalesTotal: "Total Sales", thDS: "Sales ", thGrandTotal: "GRAND TOTAL",
-            unitHour: "hrs", unitMinute: "mins", unitKm: "km", alertNoRoute: "No matching route found!"
+            unitHour: "hrs", unitMinute: "mins", unitKm: "km", alertNoRoute: "No matching route found!",
+            lblTime: "Time: " // Thêm nhãn tiếng Anh
         }
     };
 
     let curLang = 'vi';
+    let globalReportTime = ""; // Biến toàn cục lưu giá trị ô E2 lấy từ Excel
 
     // Trạng thái tải dữ liệu được theo dõi riêng biệt cho từng file
     // ('idle' | 'loading' | 'done' | 'error')
@@ -364,22 +363,20 @@
         if (!selNV.value && selNV.options.length > 0) selNV.options[0].text = langData[curLang].optNV;
         if (!selDay.value && selDay.options.length > 0) selDay.options[0].text = langData[curLang].optDay;
 
-        // FIX: mỗi ô trạng thái (Route / Order) được vẽ lại độc lập theo
-        // trạng thái thực tế của chính nó, thay vì suy đoán chung từ rawRouteData.
         refreshStatusBadges();
+
+        // Cập nhật text hiển thị thời gian khi đổi ngôn ngữ
+        if (globalReportTime) {
+            document.getElementById('report-time').innerText = langData[curLang].lblTime + globalReportTime;
+        }
 
         if (selDay.value) processDataAndRender();
     }
 
     // ================= CẤU HÌNH BẢO MẬT SUPABASE =================
     const SUPABASE_URL = 'https://mrqldgycwovpbmzdeuyz.supabase.co';
-    // ⚠️ LƯU Ý: Key bên dưới là "publishable key" (định dạng mới, bắt đầu bằng
-    // sb_publishable_...) của Supabase, không phải Anon JWT cũ (eyJ...).
-    // SDK v2 hỗ trợ cả hai định dạng. Nếu dự án của bạn dùng Anon JWT, hãy
-    // thay bằng chuỗi bắt đầu eyJ... tương ứng.
     const SUPABASE_ANON_KEY = 'sb_publishable_itZfZBVw7bxE184tGh7x8A_0_r-QB5p'; 
     
-    // Đổi tên biến tránh xung đột định danh hệ thống
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const BUCKET_NAME = 'mappingdata';
@@ -446,9 +443,18 @@
             let arrRoute = await resRoute.arrayBuffer();
             let wbRoute = XLSX.read(arrRoute, {type: 'array'});
             let jsonRoute = XLSX.utils.sheet_to_json(wbRoute.Sheets[wbRoute.SheetNames[0]], {header: 1});
+            
+            // --- XỬ LÝ ĐỂ LẤY Ô E2 TRONG FILE MAP ---
+            // Ô E2 tương ứng dòng index 1, cột index 4 trong mảng 2 chiều
+            if (jsonRoute.length > 1 && jsonRoute[1][4] !== undefined) {
+                globalReportTime = jsonRoute[1][4];
+                document.getElementById('report-time').innerText = langData[curLang].lblTime + globalReportTime;
+            } else {
+                document.getElementById('report-time').innerText = "";
+            }
+            // ----------------------------------------
+
             rawRouteData = jsonRoute.filter(row => row[COL.NPP] && row[COL.NV] && !isNaN(parseInt(row[0])));
-            // FIX: cập nhật trạng thái riêng cho Route ngay khi thành công,
-            // không gộp chung với trạng thái của Order.
             loadStatus.route = 'done';
             refreshStatusBadges();
 
@@ -482,7 +488,6 @@
                 return !strC.includes("ngành hàng") && !strC.includes("nhóm hàng") && !strC.includes("loại hàng") && !strC.includes("category");
             });
             
-            // FIX: chỉ đánh dấu Order 'done' khi thực sự tải & xử lý xong.
             loadStatus.order = 'done';
             refreshStatusBadges();
             
@@ -492,8 +497,6 @@
 
         } catch (err) {
             console.error("Lỗi:", err);
-            // FIX: chỉ set 'error' cho phần chưa hoàn thành ('loading'),
-            // không ghi đè trạng thái 'done' của phần đã tải thành công trước đó.
             if (loadStatus.route === 'loading') loadStatus.route = 'error';
             if (loadStatus.order === 'loading') loadStatus.order = 'error';
             refreshStatusBadges();
@@ -739,9 +742,6 @@
     }
     function getHaversine14(lat1, lon1, lat2, lon2) {
         lat1 = parseFloat(lat1); lon1 = parseFloat(lon1); lat2 = parseFloat(lat2); lon2 = parseFloat(lon2);
-        // FIX: dùng isNaN() thay vì falsy-check (!lat1 ...), vì falsy-check coi
-        // tọa độ hợp lệ bằng 0 là "thiếu dữ liệu" và làm mất khoảng cách một
-        // cách âm thầm. isNaN() chỉ loại các giá trị thực sự không phải số.
         if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) return 0;
         const R = 6371; 
         const dLat = (lat2 - lat1) * (Math.PI / 180); const dLon = (lon2 - lon1) * (Math.PI / 180);
@@ -751,9 +751,8 @@
     function formatNum(num) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0); }
     function formatCurrency(num) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num || 0); }
     
-    // Khởi tạo
+    // Khởi tạo ngôn ngữ ban đầu
     setLang('vi');
-
 </script>
 
 </body>
