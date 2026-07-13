@@ -46,10 +46,11 @@
         .btn-primary:hover { background-color: #2563eb; }
         .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; opacity: 0.7; }
         
-        .btn-success {
-            background-color: #10b981; margin: 0; padding: 8px 10px; width: 100%;
-        }
+        .btn-success { background-color: #10b981; margin: 0; padding: 8px 10px; flex: 1; }
         .btn-success:hover { background-color: #059669; }
+
+        .btn-purple { background-color: #8b5cf6; margin: 0; padding: 8px 10px; flex: 1; }
+        .btn-purple:hover { background-color: #7c3aed; }
 
         .file-status-box { margin-bottom: 10px; display: flex; justify-content: space-between; font-weight: bold;}
         .status-badge { font-weight: normal; font-size: 12px; }
@@ -105,43 +106,14 @@
             object-fit: cover; 
         }
 
-        .filters-wrapper { 
-            flex-grow: 1; 
-        }
+        .filters-wrapper { flex-grow: 1; }
+        .filter-row { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .filter-row h3 { margin: 0; min-width: 100px; color: #1e293b; }
+        .filter-item { display: flex; flex-direction: column; flex: 0 1 200px; }
+        .filter-item label { font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #475569; }
+        .filter-item select { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; width: 100%; }
 
-        .filter-row { 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            margin-bottom: 15px; 
-        }
-
-        .filter-row h3 { 
-            margin: 0; 
-            min-width: 100px; 
-            color: #1e293b; 
-        }
-
-        .filter-item { 
-            display: flex; 
-            flex-direction: column; 
-            flex: 0 1 200px; 
-        }
-
-        .filter-item label { 
-            font-size: 13px; 
-            font-weight: bold; 
-            margin-bottom: 5px; 
-            color: #475569; 
-        }
-
-        .filter-item select { 
-            padding: 8px; 
-            border: 1px solid #cbd5e1; 
-            border-radius: 4px; 
-            font-size: 14px; 
-            width: 100%; 
-        }
+        .action-buttons-container { display: flex; gap: 10px; flex: 1; }
 
         /* Bảng Thống kê KPI */
         .summary-card { margin-bottom: 20px; }
@@ -234,11 +206,16 @@
                         <label data-i18n="lblDay">Thứ (Day)</label>
                         <select id="sel-day" disabled><option value="" data-i18n="optDay">-- Chọn Thứ --</option></select>
                     </div>
-                    <!-- Nút Tải báo cáo tuần mới thêm -->
-                    <div class="filter-item">
-                        <label style="visibility: hidden;">Action</label>
+                </div>
+                
+                <div class="filter-row" style="margin-top: 15px;">
+                    <h3 style="min-width: 100px; margin: 0;"></h3>
+                    <div class="action-buttons-container">
                         <button id="btn-dl-week" class="btn-primary btn-success" onclick="downloadWeeklyReport()" disabled data-i18n="btnWeek">
                             📸 Báo Cáo Tuần
+                        </button>
+                        <button id="btn-dl-map-week" class="btn-primary btn-purple" onclick="downloadWeeklyMap()" disabled data-i18n="btnMapWeek">
+                            🗺️ Bản Đồ Tuần
                         </button>
                     </div>
                 </div>
@@ -316,7 +293,8 @@
     const langData = {
         vi: {
             pageTitle: "Theo Dõi Đi Tuyến Nhân Viên", warningTitle: "Báo cáo chi tiết ghé thăm khách hàng",
-            btnLoad: "📥 Tải Dữ Liệu", btnWeek: "📸 Báo Cáo Tuần", lblRoute: "1. Dữ liệu ghé thăm:", lblOrder: "2. Dữ liệu đơn hàng:",
+            btnLoad: "📥 Tải Dữ Liệu", btnWeek: "📸 Báo Cáo Tuần", btnMapWeek: "🗺️ Bản Đồ Tuần",
+            lblRoute: "1. Dữ liệu ghé thăm:", lblOrder: "2. Dữ liệu đơn hàng:",
             statusEmpty: "(Chưa tải)", statusLoading: "⌛ Đang xử lý...", statusDone: "✅ Đã tải xong", statusError: "❌ Lỗi tải file",
             filterTitle: "Bộ Lọc", lblArea: "Khu vực", optArea: "-- Chọn Khu vực --", lblNPP: "Đơn vị PP", optNPP: "-- Chọn NPP --", lblNV: "Nhân viên", optNV: "-- Chọn Nhân viên --", lblDay: "Thứ (Day)", optDay: "-- Chọn Thứ --",
             kpiHeader: "📊 Bảng Tổng Hợp Tuyến Đường", kpiCheckin: "Giờ Check-in (KH đầu tiên)", kpiCheckout: "Giờ Check-out (KH cuối cùng)", kpiTotalTime: "Tổng thời gian làm việc",
@@ -329,7 +307,8 @@
         },
         en: {
             pageTitle: "Employee Route Tracking", warningTitle: "Customer Visit Detail Report",
-            btnLoad: "📥 Load Data", btnWeek: "📸 Weekly Report", lblRoute: "1. Visit Data:", lblOrder: "2. Order Data:",
+            btnLoad: "📥 Load Data", btnWeek: "📸 Weekly Report", btnMapWeek: "🗺️ Weekly Map",
+            lblRoute: "1. Visit Data:", lblOrder: "2. Order Data:",
             statusEmpty: "(Not loaded)", statusLoading: "⌛ Loading...", statusDone: "✅ Done", statusError: "❌ Fetch Error",
             filterTitle: "Filters", lblArea: "Area", optArea: "-- Select Area --", lblNPP: "Distributor", optNPP: "-- Select Distributor --", lblNV: "Employee", optNV: "-- Select Employee --", lblDay: "Day", optDay: "-- Select Day --",
             kpiHeader: "📊 Route Summary Dashboard", kpiCheckin: "Check-in Time (First store)", kpiCheckout: "Check-out Time (Last store)", kpiTotalTime: "Total Working Time",
@@ -405,7 +384,7 @@
     let COL_EX2 = { MA_DON_HANG: 16, NGANH_HANG: 39, DOANH_SO: 34 };
 
     const colorMap = {
-        'Thứ 2': '#22c55e', 'Thứ 3': '#ef4444', 'Thứ 4': '#a855f7', 'Thứ 5': '#eab308', 'Thứ 6': '#000000', 'Thứ 7': '#3b82f6'
+        'Thứ 2': '#22c55e', 'Thứ 3': '#ef4444', 'Thứ 4': '#a855f7', 'Thứ 5': '#eab308', 'Thứ 6': '#000000', 'Thứ 7': '#3b82f6', 'Chủ nhật': '#f97316'
     };
 
     let rawRouteData = []; let rawOrderData = []; let categoryList = []; 
@@ -420,7 +399,8 @@
     const selDay = document.getElementById('sel-day');
     const avatarImg = document.getElementById('avatar-img');
     const dashboard = document.getElementById('dashboard-section');
-    const btnDlWeek = document.getElementById('btn-dl-week'); // Nút tải ảnh tuần
+    const btnDlWeek = document.getElementById('btn-dl-week'); 
+    const btnDlMapWeek = document.getElementById('btn-dl-map-week');
 
     async function loadDataFromSupabase() {
         const btn = document.getElementById('btnLoadData');
@@ -511,6 +491,11 @@
         }
     }
 
+    function setButtonsState(disabled) {
+        btnDlWeek.disabled = disabled;
+        btnDlMapWeek.disabled = disabled;
+    }
+
     function updateFilters() {
         let areas = [...new Set(rawRouteData.map(r => r[COL.AREA]))].filter(Boolean);
         selArea.innerHTML = `<option value="">${langData[curLang].optArea}</option>`;
@@ -520,12 +505,12 @@
         selNPP.innerHTML = `<option value="">${langData[curLang].optNPP}</option>`; selNPP.disabled = true;
         selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`; selNV.disabled = true;
         selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
-        btnDlWeek.disabled = true;
+        setButtonsState(true);
     }
 
     selArea.addEventListener('change', () => {
         const area = selArea.value;
-        if (!area) { resetDashboard(); selNPP.disabled = true; selNV.disabled = true; selDay.disabled = true; btnDlWeek.disabled = true; return; }
+        if (!area) { resetDashboard(); selNPP.disabled = true; selNV.disabled = true; selDay.disabled = true; setButtonsState(true); return; }
         
         let npps = [...new Set(rawRouteData.filter(r => r[COL.AREA] === area).map(r => r[COL.NPP]))].filter(Boolean);
         selNPP.innerHTML = `<option value="">${langData[curLang].optNPP}</option>`;
@@ -534,13 +519,13 @@
         
         selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`; selNV.disabled = true;
         selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
-        btnDlWeek.disabled = true;
+        setButtonsState(true);
     });
 
     selNPP.addEventListener('change', () => {
         const area = selArea.value;
         const npp = selNPP.value;
-        if (!npp) { resetDashboard(); selNV.disabled = true; selDay.disabled = true; btnDlWeek.disabled = true; return; }
+        if (!npp) { resetDashboard(); selNV.disabled = true; selDay.disabled = true; setButtonsState(true); return; }
         
         let nvs = [...new Set(rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp).map(r => r[COL.NV]))].filter(Boolean);
         selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`;
@@ -548,17 +533,17 @@
         selNV.disabled = false;
         
         selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
-        btnDlWeek.disabled = true;
+        setButtonsState(true);
     });
 
     selNV.addEventListener('change', () => {
         const area = selArea.value; 
         const npp = selNPP.value; 
         const nv = selNV.value; 
-        if (!nv) { resetDashboard(); selDay.disabled = true; btnDlWeek.disabled = true; return; }
+        if (!nv) { resetDashboard(); selDay.disabled = true; setButtonsState(true); return; }
         
         avatarImg.src = `New folder/images/${nv}.PNG`;
-        btnDlWeek.disabled = false; // Bật nút Tải báo cáo tuần khi đã chọn NV
+        setButtonsState(false); // Bật nút Tải báo cáo & bản đồ tuần khi đã chọn NV
 
         let thus = [...new Set(rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp && r[COL.NV] === nv).map(r => r[COL.THU]))].filter(Boolean);
         thus.sort((a, b) => a.localeCompare(b));
@@ -759,7 +744,7 @@
         tfoot.innerHTML = ''; tfoot.appendChild(tfRow);
     }
 
-    // ================= TẢI BÁO CÁO TUẦN (CHỤP ẢNH) =================
+    // ================= TẢI BÁO CÁO TUẦN (Khắc phục lỗi html2canvas trộn dòng) =================
     async function downloadWeeklyReport() {
         const area = selArea.value; const npp = selNPP.value; const nv = selNV.value;
         if (!area || !npp || !nv) return;
@@ -769,7 +754,6 @@
         btnDlWeek.innerText = "⌛ Đang tạo ảnh...";
 
         try {
-            // Lọc dữ liệu của nhân viên trong tất cả các ngày
             let empData = rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp && r[COL.NV] === nv);
             if (empData.length === 0) throw new Error("Không có dữ liệu!");
 
@@ -777,7 +761,6 @@
             let reportRows = [];
             let totalVisited = 0, totalOrdered = 0, totalSales = 0, totalDistance = 0;
 
-            // Xử lý dữ liệu từng ngày
             days.forEach(day => {
                 let dayData = empData.filter(r => r[COL.THU] === day);
                 if (dayData.length > 0) {
@@ -785,7 +768,6 @@
                     
                     let checkIn = dayData[0][COL.TIME_IN] || '--';
                     let checkOut = dayData[dayData.length - 1][COL.TIME_OUT] || '--';
-                    
                     let visited = dayData.length;
                     let ordered = 0;
                     let daySales = 0;
@@ -810,10 +792,7 @@
                         }
                     });
 
-                    totalVisited += visited;
-                    totalOrdered += ordered;
-                    totalSales += daySales;
-                    totalDistance += dayDist;
+                    totalVisited += visited; totalOrdered += ordered; totalSales += daySales; totalDistance += dayDist;
 
                     reportRows.push(`
                         <tr>
@@ -829,7 +808,6 @@
                 }
             });
 
-            // Tạo khung HTML ẩn chứa giao diện của Báo Cáo Tuần
             let container = document.createElement('div');
             container.style.position = 'absolute';
             container.style.top = '-9999px';
@@ -840,6 +818,7 @@
             container.style.fontFamily = 'Arial, sans-serif';
             container.style.color = '#0f172a';
 
+            // Gộp tất cả thẻ thead, tbody, tfoot vào trong các thẻ <tr> nối tiếp nhau
             container.innerHTML = `
                 <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #3b82f6; padding-bottom: 15px;">
                     <h2 style="margin: 0; color: #1e40af; font-size: 24px; text-transform: uppercase;">Báo Cáo Tổng Hợp Tuần</h2>
@@ -847,30 +826,24 @@
                         Khu vực: <b>${area}</b> &nbsp;|&nbsp; NPP: <b>${npp}</b> &nbsp;|&nbsp; Nhân viên: <b>${nv}</b>
                     </p>
                 </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 15px;">
-                    <thead style="background-color: #f8fafc; color: #1e293b;">
-                        <tr>
-                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Ngày làm việc</th>
-                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Giờ Check-in</th>
-                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Giờ Check-out</th>
-                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Số KH viếng thăm</th>
-                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Số KH lên đơn</th>
-                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: right;">Tổng Doanh số</th>
-                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: right;">Quãng đường</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${reportRows.join('')}
-                    </tbody>
-                    <tfoot style="background-color: #e2e8f0; font-size: 16px;">
-                        <tr>
-                            <td colspan="3" style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold; color: #0f172a;">TỔNG CỘNG TUẦN:</td>
-                            <td style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #2563eb;">${totalVisited}</td>
-                            <td style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #d97706;">${totalOrdered}</td>
-                            <td style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold; color: #15803d;">${formatCurrency(totalSales)}</td>
-                            <td style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold; color: #0369a1;">${formatNum(totalDistance)} km</td>
-                        </tr>
-                    </tfoot>
+                <table style="width: 100%; border-collapse: collapse; font-size: 15px; background: #fff;">
+                    <tr style="background-color: #f8fafc; color: #1e293b;">
+                        <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Ngày làm việc</th>
+                        <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Giờ Check-in</th>
+                        <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Giờ Check-out</th>
+                        <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Số KH viếng thăm</th>
+                        <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Số KH lên đơn</th>
+                        <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: right;">Tổng Doanh số</th>
+                        <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: right;">Quãng đường</th>
+                    </tr>
+                    ${reportRows.join('')}
+                    <tr style="background-color: #e2e8f0; font-size: 16px;">
+                        <td colspan="3" style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold; color: #0f172a;">TỔNG CỘNG TUẦN:</td>
+                        <td style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #2563eb;">${totalVisited}</td>
+                        <td style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #d97706;">${totalOrdered}</td>
+                        <td style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold; color: #15803d;">${formatCurrency(totalSales)}</td>
+                        <td style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold; color: #0369a1;">${formatNum(totalDistance)} km</td>
+                    </tr>
                 </table>
                 <div style="margin-top: 20px; font-size: 13px; color: #64748b; text-align: right; font-style: italic;">
                     ${langData[curLang].lblTime || 'Trích xuất lúc: '} ${globalReportTime || new Date().toLocaleString('vi-VN')}
@@ -879,8 +852,7 @@
             
             document.body.appendChild(container);
 
-            // Tiến hành chụp khung HTML thành ảnh PNG
-            let canvas = await html2canvas(container, { scale: 2 }); // Tỉ lệ 2 để ảnh nét hơn
+            let canvas = await html2canvas(container, { scale: 2 }); 
             let link = document.createElement('a');
             link.download = `Bao_Cao_Tuan_${nv.replace(/\s+/g, '_')}.png`;
             link.href = canvas.toDataURL('image/png');
@@ -893,6 +865,89 @@
         } finally {
             btnDlWeek.innerText = originalText;
             btnDlWeek.disabled = false;
+        }
+    }
+
+    // ================= TẢI ẢNH BẢN ĐỒ TOÀN BỘ TUẦN =================
+    async function downloadWeeklyMap() {
+        const area = selArea.value; const npp = selNPP.value; const nv = selNV.value;
+        if (!area || !npp || !nv) return;
+
+        btnDlMapWeek.disabled = true;
+        let originalText = btnDlMapWeek.innerText;
+        btnDlMapWeek.innerText = "⌛ Đang chụp...";
+
+        try {
+            let empData = rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp && r[COL.NV] === nv);
+            if (empData.length === 0) throw new Error("Không có dữ liệu!");
+
+            routeLayer.clearLayers();
+            let allLatLngs = [];
+            let days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+            
+            // Vẽ toàn bộ các ngày lên bản đồ
+            days.forEach(day => {
+                let dayData = empData.filter(r => r[COL.THU] === day);
+                if (dayData.length > 0) {
+                    dayData.sort((a, b) => parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]));
+                    let color = colorMap[day] || '#3b82f6';
+                    let dayLatLngs = [];
+                    
+                    dayData.forEach((row) => {
+                        let lat = parseFloat(row[COL.LAT]); let lng = parseFloat(row[COL.LNG]); let stt = row[COL.STT_GHE];
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            let ll = [lat, lng];
+                            dayLatLngs.push(ll);
+                            allLatLngs.push(ll);
+                            
+                            let icon = L.divIcon({
+                                className: 'custom-div-icon',
+                                html: `<div class="route-marker" style="background-color: ${color};">${stt}</div>`,
+                                iconSize: [26, 26], iconAnchor: [13, 13]
+                            });
+                            let marker = L.marker(ll, {icon: icon});
+                            routeLayer.addLayer(marker);
+                        }
+                    });
+                    
+                    if (dayLatLngs.length > 1) {
+                        L.polyline(dayLatLngs, {color: color, weight: 3, opacity: 0.7, dashArray: '5, 5'}).addTo(routeLayer);
+                    }
+                }
+            });
+
+            if (allLatLngs.length > 0) {
+                map.fitBounds(L.latLngBounds(allLatLngs), {padding: [30, 30]});
+            }
+
+            // Dừng 1.5 giây để chờ thư viện load xong toàn bộ Tiles của bản đồ
+            await new Promise(r => setTimeout(r, 1500));
+
+            // Bắt buộc bật useCORS để có thể lưu tiles từ máy chủ bên ngoài
+            let canvas = await html2canvas(document.getElementById('map'), { 
+                useCORS: true,
+                allowTaint: false,
+                scale: 2 
+            });
+            
+            let link = document.createElement('a');
+            link.download = `Ban_Do_Tuan_${nv.replace(/\s+/g, '_')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            // Trả lại Map như cũ (chỉ hiển thị ngày đang được chọn trên Menu)
+            if (selDay.value) {
+                processDataAndRender();
+            } else {
+                routeLayer.clearLayers();
+            }
+
+        } catch (err) {
+            console.error("Lỗi tạo bản đồ:", err);
+            alert("Có lỗi xảy ra khi tạo ảnh bản đồ!");
+        } finally {
+            btnDlMapWeek.innerText = originalText;
+            btnDlMapWeek.disabled = false;
         }
     }
 
@@ -918,7 +973,7 @@
     function formatNum(num) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0); }
     function formatCurrency(num) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num || 0); }
     
-    // Khởi tạo ngôn ngữ ban đầu
+    // Khởi tạo
     setLang('vi');
 </script>
 
