@@ -9,7 +9,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Thư viện chụp ảnh màn hình html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
@@ -75,7 +74,7 @@
         }
         .lang-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
 
-        /* Khu vực Bộ lọc & Ảnh đại diện */
+        /* Khu vực Bộ lọc */
         .filter-header-section {
             display: flex; 
             margin-bottom: 20px; 
@@ -100,18 +99,25 @@
             flex-shrink: 0; 
         }
 
-        #avatar-container img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-        }
+        #avatar-container img { width: 100%; height: 100%; object-fit: cover; }
 
         .filters-wrapper { flex-grow: 1; }
-        .filter-row { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
-        .filter-row h3 { margin: 0; min-width: 100px; color: #1e293b; }
-        .filter-item { display: flex; flex-direction: column; flex: 0 1 200px; }
+        .filter-row { display: flex; align-items: flex-start; gap: 15px; margin-bottom: 15px; }
+        .filter-row h3 { margin: 0; min-width: 100px; color: #1e293b; padding-top: 5px; }
+        .filter-item { display: flex; flex-direction: column; flex: 1; }
         .filter-item label { font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #475569; }
         .filter-item select { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; width: 100%; }
+
+        /* Bộ lọc chọn nhiều ngày dạng Chip */
+        .day-chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 35px; align-items: center; }
+        .day-chip { 
+            padding: 6px 12px; background: #f8fafc; border: 1px solid #cbd5e1; 
+            border-radius: 6px; font-size: 13px; font-weight: 600; color: #475569; 
+            cursor: pointer; transition: all 0.2s; user-select: none;
+        }
+        .day-chip:hover { background: #e2e8f0; }
+        .day-chip.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .day-chip.active:hover { background: #2563eb; }
 
         .action-buttons-container { display: flex; gap: 10px; flex: 1; }
 
@@ -196,15 +202,23 @@
                         <select id="sel-npp" disabled><option value="" data-i18n="optNPP">-- Chọn NPP --</option></select>
                     </div>
                 </div>
+                
                 <div class="filter-row">
                     <h3 style="min-width: 100px; margin: 0;"></h3>
                     <div class="filter-item">
                         <label data-i18n="lblNV">Nhân viên</label>
                         <select id="sel-nv" disabled><option value="" data-i18n="optNV">-- Chọn Nhân viên --</option></select>
                     </div>
-                    <div class="filter-item">
-                        <label data-i18n="lblDay">Thứ (Day)</label>
-                        <select id="sel-day" disabled><option value="" data-i18n="optDay">-- Chọn Thứ --</option></select>
+                </div>
+
+                <!-- Dòng hiển thị các phím bấm chọn Thứ -->
+                <div class="filter-row">
+                    <h3 style="min-width: 100px; margin: 0;"></h3>
+                    <div class="filter-item" style="flex: 2;">
+                        <label data-i18n="lblDay">Thứ (Day) - Chọn nhiều ngày</label>
+                        <div id="day-chips-container" class="day-chips">
+                            <span style="color:#94a3b8; font-size: 13px;" data-i18n="optDay">-- Chọn Thứ --</span>
+                        </div>
                     </div>
                 </div>
                 
@@ -272,7 +286,7 @@
                 </div>
                 <div class="kpi-box" style="border-color: #94a3b8;">
                     <div class="kpi-title" data-i18n="kpiRest">Thời gian nghỉ trưa</div>
-                    <div class="kpi-value" data-i18n="valRest">1 giờ 0 phút</div>
+                    <div class="kpi-value" id="kpi-rest">--</div>
                 </div>
             </div>
 
@@ -299,30 +313,31 @@
             filterTitle: "Bộ Lọc", lblArea: "Khu vực", optArea: "-- Chọn Khu vực --", lblNPP: "Đơn vị PP", optNPP: "-- Chọn NPP --", lblNV: "Nhân viên", optNV: "-- Chọn Nhân viên --", lblDay: "Thứ (Day)", optDay: "-- Chọn Thứ --",
             kpiHeader: "📊 Bảng Tổng Hợp Tuyến Đường", kpiCheckin: "Giờ Check-in (KH đầu tiên)", kpiCheckout: "Giờ Check-out (KH cuối cùng)", kpiTotalTime: "Tổng thời gian làm việc",
             kpiTotalVisit: "Số KH đã ghé thăm (Tổng)", kpiInRoute: "Trong tuyến ghé:", kpiOutRoute: "Ngoài tuyến ghé:", kpiOrdered: "Số KH lên đơn thành công", kpiWorkTime: "Thời gian làm việc với KH",
-            kpiDist: "Tổng quãng đường", kpiMoveTime: "Thời gian di chuyển (v=20km/h)", kpiRest: "Thời gian nghỉ trưa", valRest: "1 giờ 0 phút",
-            tableTitle: "📋 Chi Tiết Ghé Thăm & Doanh Số", thCode: "Mã KH", thName: "Tên KH", thStart: "Thời điểm Bắt đầu", thEnd: "Thời điểm Kết thúc", thDist: "Khoảng cách đến KH kế tiếp (km)", thTimeAt: "Thời gian làm việc tại KH (phút)", thTimeMove: "Thời gian Di chuyển đến KH kế tiếp (phút)",
+            kpiDist: "Tổng quãng đường", kpiMoveTime: "Thời gian di chuyển (v=20km/h)", kpiRest: "Thời gian nghỉ trưa", 
+            tableTitle: "📋 Chi Tiết Ghé Thăm & Doanh Số", thDay: "Ngày (Thứ)", thCode: "Mã KH", thName: "Tên KH", thStart: "Thời điểm Bắt đầu", thEnd: "Thời điểm Kết thúc", thDist: "Khoảng cách đến KH kế tiếp (km)", thTimeAt: "Thời gian làm việc tại KH (phút)", thTimeMove: "Thời gian Di chuyển đến KH kế tiếp (phút)",
             thSalesCat: "Doanh số theo ngành hàng", thSalesTotal: "Tổng doanh số", thDS: "DS ", thGrandTotal: "GRAND TOTAL",
             unitHour: "giờ", unitMinute: "phút", unitKm: "km", alertNoRoute: "Không tìm thấy lộ trình phù hợp!",
-            lblTime: "Thời gian: " 
+            lblTime: "Thời gian: ", lblAll: "Tất cả", multiDays: "Nhiều ngày"
         },
         en: {
             pageTitle: "Employee Route Tracking", warningTitle: "Customer Visit Detail Report",
             btnLoad: "📥 Load Data", btnWeek: "📸 Weekly Report", btnMapWeek: "🗺️ Weekly Map",
             lblRoute: "1. Visit Data:", lblOrder: "2. Order Data:",
             statusEmpty: "(Not loaded)", statusLoading: "⌛ Loading...", statusDone: "✅ Done", statusError: "❌ Fetch Error",
-            filterTitle: "Filters", lblArea: "Area", optArea: "-- Select Area --", lblNPP: "Distributor", optNPP: "-- Select Distributor --", lblNV: "Employee", optNV: "-- Select Employee --", lblDay: "Day", optDay: "-- Select Day --",
+            filterTitle: "Filters", lblArea: "Area", optArea: "-- Select Area --", lblNPP: "Distributor", optNPP: "-- Select Distributor --", lblNV: "Employee", optNV: "-- Select Employee --", lblDay: "Day (Multi-select)", optDay: "-- Select Day --",
             kpiHeader: "📊 Route Summary Dashboard", kpiCheckin: "Check-in Time (First store)", kpiCheckout: "Check-out Time (Last store)", kpiTotalTime: "Total Working Time",
             kpiTotalVisit: "Total Visited Customers", kpiInRoute: "In-route:", kpiOutRoute: "Out-of-route:", kpiOrdered: "Successful Cus Ordered", kpiWorkTime: "Time spent with Customers",
-            kpiDist: "Total Distance", kpiMoveTime: "Moving Time (v=20km/h)", kpiRest: "Lunch Break", valRest: "1 hour 0 minutes",
-            tableTitle: "📋 Visit & Sales Details", thCode: "Cust. Code", thName: "Cust. Name", thStart: "Start", thEnd: "End", thDist: "Distance to next customer (km)", thTimeAt: "Time at store (mins)", thTimeMove: "Moving time to next cus (mins)",
+            kpiDist: "Total Distance", kpiMoveTime: "Moving Time (v=20km/h)", kpiRest: "Lunch Break", 
+            tableTitle: "📋 Visit & Sales Details", thDay: "Day", thCode: "Cust. Code", thName: "Cust. Name", thStart: "Start", thEnd: "End", thDist: "Distance to next customer (km)", thTimeAt: "Time at store (mins)", thTimeMove: "Moving time to next cus (mins)",
             thSalesCat: "Sales by Category", thSalesTotal: "Total Sales", thDS: "Sales ", thGrandTotal: "GRAND TOTAL",
             unitHour: "hrs", unitMinute: "mins", unitKm: "km", alertNoRoute: "No matching route found!",
-            lblTime: "Time: "
+            lblTime: "Time: ", lblAll: "All", multiDays: "Multiple days"
         }
     };
 
     let curLang = 'vi';
     let globalReportTime = ""; 
+    let selectedDays = []; // Mảng lưu các ngày đang được chọn
 
     let loadStatus = { route: 'idle', order: 'idle' };
 
@@ -358,7 +373,12 @@
         if (!selArea.value && selArea.options.length > 0) selArea.options[0].text = langData[curLang].optArea;
         if (!selNPP.value && selNPP.options.length > 0) selNPP.options[0].text = langData[curLang].optNPP;
         if (!selNV.value && selNV.options.length > 0) selNV.options[0].text = langData[curLang].optNV;
-        if (!selDay.value && selDay.options.length > 0) selDay.options[0].text = langData[curLang].optDay;
+        
+        let chipAll = document.getElementById('chip-all');
+        if(chipAll) chipAll.innerText = langData[curLang].lblAll;
+        if(selectedDays.length === 0) {
+            document.getElementById('day-chips-container').innerHTML = `<span style="color:#94a3b8; font-size: 13px;">${langData[curLang].optDay}</span>`;
+        }
 
         refreshStatusBadges();
 
@@ -366,7 +386,7 @@
             document.getElementById('report-time').innerText = langData[curLang].lblTime + globalReportTime;
         }
 
-        if (selDay.value) processDataAndRender();
+        if (selectedDays.length > 0) processDataAndRender();
     }
 
     const SUPABASE_URL = 'https://mrqldgycwovpbmzdeuyz.supabase.co';
@@ -396,8 +416,6 @@
     const selArea = document.getElementById('sel-area');
     const selNPP = document.getElementById('sel-npp');
     const selNV = document.getElementById('sel-nv');
-    const selDay = document.getElementById('sel-day');
-    const avatarImg = document.getElementById('avatar-img');
     const dashboard = document.getElementById('dashboard-section');
     const btnDlWeek = document.getElementById('btn-dl-week'); 
     const btnDlMapWeek = document.getElementById('btn-dl-map-week');
@@ -478,7 +496,6 @@
             refreshStatusBadges();
             
             updateFilters();
-            if(selDay.value) processDataAndRender();
 
         } catch (err) {
             console.error("Lỗi:", err);
@@ -496,6 +513,11 @@
         btnDlMapWeek.disabled = disabled;
     }
 
+    function clearDayChips() {
+        selectedDays = [];
+        document.getElementById('day-chips-container').innerHTML = `<span style="color:#94a3b8; font-size: 13px;">${langData[curLang].optDay}</span>`;
+    }
+
     function updateFilters() {
         let areas = [...new Set(rawRouteData.map(r => r[COL.AREA]))].filter(Boolean);
         selArea.innerHTML = `<option value="">${langData[curLang].optArea}</option>`;
@@ -504,13 +526,13 @@
         
         selNPP.innerHTML = `<option value="">${langData[curLang].optNPP}</option>`; selNPP.disabled = true;
         selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`; selNV.disabled = true;
-        selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
+        clearDayChips();
         setButtonsState(true);
     }
 
     selArea.addEventListener('change', () => {
         const area = selArea.value;
-        if (!area) { resetDashboard(); selNPP.disabled = true; selNV.disabled = true; selDay.disabled = true; setButtonsState(true); return; }
+        if (!area) { resetDashboard(); selNPP.disabled = true; selNV.disabled = true; clearDayChips(); setButtonsState(true); return; }
         
         let npps = [...new Set(rawRouteData.filter(r => r[COL.AREA] === area).map(r => r[COL.NPP]))].filter(Boolean);
         selNPP.innerHTML = `<option value="">${langData[curLang].optNPP}</option>`;
@@ -518,89 +540,160 @@
         selNPP.disabled = false;
         
         selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`; selNV.disabled = true;
-        selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
+        clearDayChips();
         setButtonsState(true);
     });
 
     selNPP.addEventListener('change', () => {
         const area = selArea.value;
         const npp = selNPP.value;
-        if (!npp) { resetDashboard(); selNV.disabled = true; selDay.disabled = true; setButtonsState(true); return; }
+        if (!npp) { resetDashboard(); selNV.disabled = true; clearDayChips(); setButtonsState(true); return; }
         
         let nvs = [...new Set(rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp).map(r => r[COL.NV]))].filter(Boolean);
         selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`;
         nvs.forEach(nv => selNV.innerHTML += `<option value="${nv}">${nv}</option>`);
         selNV.disabled = false;
         
-        selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
+        clearDayChips();
         setButtonsState(true);
     });
 
+    // ================= XỬ LÝ CHỌN NHIỀU NGÀY BẰNG CHIPS =================
     selNV.addEventListener('change', () => {
         const area = selArea.value; 
         const npp = selNPP.value; 
         const nv = selNV.value; 
-        if (!nv) { resetDashboard(); selDay.disabled = true; setButtonsState(true); return; }
+        if (!nv) { resetDashboard(); clearDayChips(); setButtonsState(true); return; }
         
-        avatarImg.src = `New folder/images/${nv}.PNG`;
+        document.getElementById('avatar-img').src = `New folder/images/${nv}.PNG`;
         setButtonsState(false); 
 
+        selectedDays = [];
         let thus = [...new Set(rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp && r[COL.NV] === nv).map(r => r[COL.THU]))].filter(Boolean);
-        thus.sort((a, b) => a.localeCompare(b));
-        selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`;
-        thus.forEach(thu => selDay.innerHTML += `<option value="${thu}">${thu}</option>`);
-        selDay.disabled = false;
+        
+        const order = {"Thứ 2":2, "Thứ 3":3, "Thứ 4":4, "Thứ 5":5, "Thứ 6":6, "Thứ 7":7, "Chủ nhật":8};
+        thus.sort((a, b) => (order[a]||99) - (order[b]||99));
+        
+        let chipsHTML = `<div class="day-chip" id="chip-all" onclick="toggleAllDays()">${langData[curLang].lblAll}</div>`;
+        thus.forEach(thu => {
+            chipsHTML += `<div class="day-chip chip-day" data-day="${thu}" onclick="toggleDay('${thu}')">${thu}</div>`;
+        });
+        document.getElementById('day-chips-container').innerHTML = chipsHTML;
+        resetDashboard();
     });
 
-    selDay.addEventListener('change', processDataAndRender);
+    window.toggleDay = function(day) {
+        let idx = selectedDays.indexOf(day);
+        if(idx > -1) selectedDays.splice(idx, 1);
+        else selectedDays.push(day);
+        
+        updateChipStyles();
+        processDataAndRender();
+    };
 
+    window.toggleAllDays = function() {
+        let chipElements = Array.from(document.querySelectorAll('.chip-day'));
+        if(selectedDays.length === chipElements.length) {
+            selectedDays = []; 
+        } else {
+            selectedDays = chipElements.map(el => el.getAttribute('data-day'));
+        }
+        updateChipStyles();
+        processDataAndRender();
+    };
+
+    function updateChipStyles() {
+        document.querySelectorAll('.chip-day').forEach(el => {
+            if(selectedDays.includes(el.getAttribute('data-day'))) el.classList.add('active');
+            else el.classList.remove('active');
+        });
+        let chipAll = document.getElementById('chip-all');
+        if(chipAll) {
+            let totalDays = document.querySelectorAll('.chip-day').length;
+            if(selectedDays.length === totalDays && totalDays > 0) chipAll.classList.add('active');
+            else chipAll.classList.remove('active');
+        }
+    }
+
+    // ================= MAIN RENDER =================
     function processDataAndRender() {
-        const area = selArea.value; const npp = selNPP.value; const nv = selNV.value; const day = selDay.value;
-        if (!area || !npp || !nv || !day) return;
+        const area = selArea.value; const npp = selNPP.value; const nv = selNV.value;
+        if (!area || !npp || !nv || selectedDays.length === 0) {
+            resetDashboard(); return;
+        }
 
-        let currentRoute = rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp && r[COL.NV] === nv && r[COL.THU] === day);
-        currentRoute.sort((a, b) => parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]));
+        let currentRoute = rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp && r[COL.NV] === nv && selectedDays.includes(r[COL.THU]));
+        
+        const order = {"Thứ 2":2, "Thứ 3":3, "Thứ 4":4, "Thứ 5":5, "Thứ 6":6, "Thứ 7":7, "Chủ nhật":8};
+        currentRoute.sort((a, b) => {
+            let dayDiff = (order[a[COL.THU]]||99) - (order[b[COL.THU]]||99);
+            if (dayDiff !== 0) return dayDiff;
+            return parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]);
+        });
 
-        if (currentRoute.length === 0) return alert(langData[curLang].alertNoRoute);
-
-        drawMap(currentRoute, day);
+        drawMap(currentRoute);
         calculateKPIs(currentRoute);
         renderDetailTable(currentRoute);
         dashboard.style.display = 'block';
     }
 
-    function drawMap(data, day) {
-        routeLayer.clearLayers(); let latlngs = []; let color = colorMap[day] || '#3b82f6';
-        data.forEach((row) => {
-            let lat = parseFloat(row[COL.LAT]); let lng = parseFloat(row[COL.LNG]); let stt = row[COL.STT_GHE];
-            if (!isNaN(lat) && !isNaN(lng)) {
-                latlngs.push([lat, lng]);
-                let icon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div class="route-marker" style="background-color: ${color};">${stt}</div>`,
-                    iconSize: [26, 26], iconAnchor: [13, 13]
-                });
-                let marker = L.marker([lat, lng], {icon: icon});
-                marker.bindPopup(`<b>${row[COL.TEN_KH] || 'N/A'}</b><br>STT: ${stt}<br>Time: ${row[COL.TIME_IN] || 'N/A'}`);
-                routeLayer.addLayer(marker);
+    function drawMap(data) {
+        routeLayer.clearLayers(); let allLatLngs = []; 
+        
+        selectedDays.forEach(day => {
+            let dayData = data.filter(r => r[COL.THU] === day);
+            if(dayData.length === 0) return;
+
+            let color = colorMap[day] || '#3b82f6';
+            let dayLatLngs = [];
+            
+            dayData.forEach((row) => {
+                let lat = parseFloat(row[COL.LAT]); let lng = parseFloat(row[COL.LNG]); let stt = row[COL.STT_GHE];
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    dayLatLngs.push([lat, lng]);
+                    allLatLngs.push([lat, lng]);
+                    let icon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div class="route-marker" style="background-color: ${color};">${stt}</div>`,
+                        iconSize: [26, 26], iconAnchor: [13, 13]
+                    });
+                    let marker = L.marker([lat, lng], {icon: icon});
+                    marker.bindPopup(`<b>${row[COL.THU]}</b><br><b>${row[COL.TEN_KH] || 'N/A'}</b><br>STT: ${stt}<br>Time: ${row[COL.TIME_IN] || 'N/A'}`);
+                    routeLayer.addLayer(marker);
+                }
+            });
+            if (dayLatLngs.length > 1) {
+                L.polyline(dayLatLngs, {color: color, weight: 3, opacity: 0.7, dashArray: '5, 5'}).addTo(routeLayer);
             }
         });
-        if (latlngs.length > 1) {
-            let polyline = L.polyline(latlngs, {color: color, weight: 3, opacity: 0.7, dashArray: '5, 5'}).addTo(routeLayer);
-            map.fitBounds(polyline.getBounds(), {padding: [30, 30]});
+
+        if (allLatLngs.length > 0) {
+            map.fitBounds(L.latLngBounds(allLatLngs), {padding: [30, 30]});
         }
     }
 
     function calculateKPIs(data) {
-        let firstR = data[0]; let lastR = data[data.length - 1];
-        document.getElementById('kpi-checkin').innerText = firstR[COL.TIME_IN] || '00:00:00';
-        document.getElementById('kpi-checkout').innerText = lastR[COL.TIME_OUT] || '00:00:00';
-
-        let workMins = timeStrToMinutes(lastR[COL.TIME_OUT]) - timeStrToMinutes(firstR[COL.TIME_IN]);
-        document.getElementById('kpi-totaltime').innerText = minutesToStr(Math.max(0, workMins));
-
-        let totalVisited = data.length;
+        let totalWorkMins = 0;
+        let totalDist = 0;
         let inRouteCount = 0, outRouteCount = 0, khTimeMins = 0, orderedKhCount = 0; 
+        let multiDayText = langData[curLang].multiDays;
+
+        selectedDays.forEach(day => {
+            let dayData = data.filter(r => r[COL.THU] === day);
+            if(dayData.length === 0) return;
+            
+            let firstR = dayData[0]; let lastR = dayData[dayData.length - 1];
+            let workMins = timeStrToMinutes(lastR[COL.TIME_OUT]) - timeStrToMinutes(firstR[COL.TIME_IN]);
+            totalWorkMins += Math.max(0, workMins);
+
+            for(let i = 0; i < dayData.length - 1; i++) {
+                totalDist += getHaversine14(dayData[i][COL.LAT], dayData[i][COL.LNG], dayData[i+1][COL.LAT], dayData[i+1][COL.LNG]);
+            }
+        });
+
+        document.getElementById('kpi-checkin').innerText = selectedDays.length === 1 ? (data[0][COL.TIME_IN] || '--') : multiDayText;
+        document.getElementById('kpi-checkout').innerText = selectedDays.length === 1 ? (data[data.length - 1][COL.TIME_OUT] || '--') : multiDayText;
+        document.getElementById('kpi-totaltime').innerText = minutesToStr(totalWorkMins);
 
         data.forEach(r => {
             let loTrinh = (r[COL.LO_TRINH] || '').toString().toLowerCase();
@@ -612,18 +705,15 @@
             if(dsDonHangStr.includes('PO')) orderedKhCount++; 
         });
 
-        document.getElementById('kpi-total-visited').innerText = totalVisited;
+        document.getElementById('kpi-total-visited').innerText = data.length;
         document.getElementById('sub-in-route').innerText = inRouteCount;
         document.getElementById('sub-out-route').innerText = outRouteCount;
         document.getElementById('kpi-ordered-kh').innerText = orderedKhCount;
         document.getElementById('kpi-working-kh').innerText = minutesToStr(khTimeMins);
-
-        let totalDist = 0;
-        for(let i = 0; i < data.length - 1; i++) {
-            totalDist += getHaversine14(data[i][COL.LAT], data[i][COL.LNG], data[i+1][COL.LAT], data[i+1][COL.LNG]);
-        }
+        
         document.getElementById('kpi-distance').innerText = `${formatNum(totalDist)} ${langData[curLang].unitKm}`;
         document.getElementById('kpi-moving-time').innerText = minutesToStr((totalDist / 20) * 60);
+        document.getElementById('kpi-rest').innerText = `${selectedDays.length} ${langData[curLang].unitHour} 0 ${langData[curLang].unitMinute}`;
     }
 
     function renderDetailTable(data) {
@@ -656,6 +746,7 @@
 
         let lang = langData[curLang];
         let row1_HTML = `
+            <th rowspan="2" class="route-th">${lang.thDay}</th>
             <th rowspan="2" class="route-th">${lang.thCode}</th>
             <th rowspan="2" class="route-th">${lang.thName}</th>
             <th rowspan="2" class="route-th">${lang.thStart}</th>
@@ -681,8 +772,12 @@
         tbody.innerHTML = '';
         data.forEach((row, index) => {
             let tr = document.createElement('tr');
+            
             let distToNext = 0;
-            if(index < data.length - 1) distToNext = getHaversine14(row[COL.LAT], row[COL.LNG], data[index+1][COL.LAT], data[index+1][COL.LNG]);
+            // Chỉ tính khoảng cách nếu cùng 1 ngày
+            if(index < data.length - 1 && row[COL.THU] === data[index+1][COL.THU]) {
+                distToNext = getHaversine14(row[COL.LAT], row[COL.LNG], data[index+1][COL.LAT], data[index+1][COL.LNG]);
+            }
             totalDist += distToNext;
 
             let timeIn = row[COL.TIME_IN] || ''; let timeOut = row[COL.TIME_OUT] || '';
@@ -712,6 +807,7 @@
             }
 
             let rowHTML = `
+                <td style="font-weight:bold; color: ${colorMap[row[COL.THU]] || '#475569'};">${row[COL.THU] || ''}</td>
                 <td>${row[COL.MA_KH] || ''}</td>
                 <td>${row[COL.TEN_KH] || ''}</td>
                 <td>${timeIn}</td>
@@ -728,7 +824,7 @@
         });
 
         let grandTotalHTML = `
-            <td colspan="4" style="text-align:right; font-size:14px;"><b>${lang.thGrandTotal}</b></td>
+            <td colspan="5" style="text-align:right; font-size:14px;"><b>${lang.thGrandTotal}</b></td>
             <td class="num-right" style="color:#1e40af; font-size:14px;"><b>${formatNum(totalDist)} ${lang.unitKm}</b></td>
             <td class="num-right" style="color:#ec4899; font-size:14px;"><b>${formatNum(totalKHTime/60)} ${lang.unitHour}</b></td>
             <td class="num-right" style="color:#64748b; font-size:14px;"><b>${formatNum(totalMoveTime/60)} ${lang.unitHour}</b></td>
@@ -741,7 +837,7 @@
         tfoot.innerHTML = ''; tfoot.appendChild(tfRow);
     }
 
-    // ================= TẢI BÁO CÁO TUẦN (Sử dụng Flexbox để khắc phục lỗi nhảy chữ) =================
+    // ================= TẢI BÁO CÁO TUẦN (Sử dụng Flexbox chống nhảy chữ) =================
     async function downloadWeeklyReport() {
         const area = selArea.value; const npp = selNPP.value; const nv = selNV.value;
         if (!area || !npp || !nv) return;
@@ -828,7 +924,6 @@
                 </div>
                 
                 <div style="border: 1px solid #cbd5e1; border-bottom: none; font-size: 15px;">
-                    <!-- Header dạng div/flex để không bị chồng chéo -->
                     <div style="${rowStyle} background-color: #f8fafc; font-weight: bold; color: #1e293b;">
                         <div style="${cellStyle} width: 13%; justify-content: center; text-align: center;">Ngày làm việc</div>
                         <div style="${cellStyle} width: 13%; justify-content: center; text-align: center;">Giờ Check-in</div>
@@ -839,10 +934,8 @@
                         <div style="${cellStyle} width: 16%; justify-content: flex-end; text-align: right; border-right: none;">Quãng đường</div>
                     </div>
                     
-                    <!-- Rows -->
                     ${reportRows.join('')}
                     
-                    <!-- Footer -->
                     <div style="${rowStyle} background-color: #e2e8f0; font-size: 16px; border-bottom: none;">
                         <div style="${cellStyle} width: 39%; justify-content: flex-end; font-weight: bold; color: #0f172a;">TỔNG CỘNG TUẦN:</div>
                         <div style="${cellStyle} width: 13%; justify-content: center; font-weight: bold; color: #2563eb;">${totalVisited}</div>
@@ -926,7 +1019,6 @@
                 map.fitBounds(L.latLngBounds(allLatLngs), {padding: [30, 30]});
             }
 
-            // Dừng 1.5 giây để chờ thư viện load xong toàn bộ Tiles của bản đồ
             await new Promise(r => setTimeout(r, 1500));
 
             let canvas = await html2canvas(document.getElementById('map'), { 
@@ -940,7 +1032,7 @@
             link.href = canvas.toDataURL('image/png');
             link.click();
 
-            if (selDay.value) {
+            if (selectedDays.length > 0) {
                 processDataAndRender();
             } else {
                 routeLayer.clearLayers();
@@ -975,7 +1067,6 @@
     function formatNum(num) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0); }
     function formatCurrency(num) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num || 0); }
     
-    // Khởi tạo
     setLang('vi');
 </script>
 
