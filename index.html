@@ -9,6 +9,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Thư viện chụp ảnh màn hình html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
         body, html {
@@ -42,8 +44,13 @@
             cursor: pointer; transition: background 0.3s; margin-bottom: 15px;
         }
         .btn-primary:hover { background-color: #2563eb; }
-        .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; }
+        .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; opacity: 0.7; }
         
+        .btn-success {
+            background-color: #10b981; margin: 0; padding: 8px 10px; width: 100%;
+        }
+        .btn-success:hover { background-color: #059669; }
+
         .file-status-box { margin-bottom: 10px; display: flex; justify-content: space-between; font-weight: bold;}
         .status-badge { font-weight: normal; font-size: 12px; }
         
@@ -208,7 +215,6 @@
             <div class="filters-wrapper">
                 <div class="filter-row">
                     <h3 data-i18n="filterTitle">Bộ Lọc</h3>
-                    <!-- Bộ lọc Khu vực mới -->
                     <div class="filter-item">
                         <label data-i18n="lblArea">Khu vực</label>
                         <select id="sel-area" disabled><option value="" data-i18n="optArea">-- Chọn Khu vực --</option></select>
@@ -219,7 +225,6 @@
                     </div>
                 </div>
                 <div class="filter-row">
-                    <!-- Thẻ H3 trống để căn lề cho dòng thứ 2 -->
                     <h3 style="min-width: 100px; margin: 0;"></h3>
                     <div class="filter-item">
                         <label data-i18n="lblNV">Nhân viên</label>
@@ -228,6 +233,13 @@
                     <div class="filter-item">
                         <label data-i18n="lblDay">Thứ (Day)</label>
                         <select id="sel-day" disabled><option value="" data-i18n="optDay">-- Chọn Thứ --</option></select>
+                    </div>
+                    <!-- Nút Tải báo cáo tuần mới thêm -->
+                    <div class="filter-item">
+                        <label style="visibility: hidden;">Action</label>
+                        <button id="btn-dl-week" class="btn-primary btn-success" onclick="downloadWeeklyReport()" disabled data-i18n="btnWeek">
+                            📸 Báo Cáo Tuần
+                        </button>
                     </div>
                 </div>
             </div>
@@ -304,7 +316,7 @@
     const langData = {
         vi: {
             pageTitle: "Theo Dõi Đi Tuyến Nhân Viên", warningTitle: "Báo cáo chi tiết ghé thăm khách hàng",
-            btnLoad: "📥 Tải Dữ Liệu", lblRoute: "1. Dữ liệu ghé thăm:", lblOrder: "2. Dữ liệu đơn hàng:",
+            btnLoad: "📥 Tải Dữ Liệu", btnWeek: "📸 Báo Cáo Tuần", lblRoute: "1. Dữ liệu ghé thăm:", lblOrder: "2. Dữ liệu đơn hàng:",
             statusEmpty: "(Chưa tải)", statusLoading: "⌛ Đang xử lý...", statusDone: "✅ Đã tải xong", statusError: "❌ Lỗi tải file",
             filterTitle: "Bộ Lọc", lblArea: "Khu vực", optArea: "-- Chọn Khu vực --", lblNPP: "Đơn vị PP", optNPP: "-- Chọn NPP --", lblNV: "Nhân viên", optNV: "-- Chọn Nhân viên --", lblDay: "Thứ (Day)", optDay: "-- Chọn Thứ --",
             kpiHeader: "📊 Bảng Tổng Hợp Tuyến Đường", kpiCheckin: "Giờ Check-in (KH đầu tiên)", kpiCheckout: "Giờ Check-out (KH cuối cùng)", kpiTotalTime: "Tổng thời gian làm việc",
@@ -317,7 +329,7 @@
         },
         en: {
             pageTitle: "Employee Route Tracking", warningTitle: "Customer Visit Detail Report",
-            btnLoad: "📥 Load Data", lblRoute: "1. Visit Data:", lblOrder: "2. Order Data:",
+            btnLoad: "📥 Load Data", btnWeek: "📸 Weekly Report", lblRoute: "1. Visit Data:", lblOrder: "2. Order Data:",
             statusEmpty: "(Not loaded)", statusLoading: "⌛ Loading...", statusDone: "✅ Done", statusError: "❌ Fetch Error",
             filterTitle: "Filters", lblArea: "Area", optArea: "-- Select Area --", lblNPP: "Distributor", optNPP: "-- Select Distributor --", lblNV: "Employee", optNV: "-- Select Employee --", lblDay: "Day", optDay: "-- Select Day --",
             kpiHeader: "📊 Route Summary Dashboard", kpiCheckin: "Check-in Time (First store)", kpiCheckout: "Check-out Time (Last store)", kpiTotalTime: "Total Working Time",
@@ -378,18 +390,14 @@
         if (selDay.value) processDataAndRender();
     }
 
-    // ================= CẤU HÌNH BẢO MẬT SUPABASE =================
     const SUPABASE_URL = 'https://mrqldgycwovpbmzdeuyz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_itZfZBVw7bxE184tGh7x8A_0_r-QB5p'; 
-    
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     const BUCKET_NAME = 'mappingdata';
     const FILE_ROUTE = 'map.xlsx';
     const FILE_ORDER = 'dh.xlsx';
     const HUB_URL = 'https://nguyen842-ai.github.io/Tong-hop-bao-cao/';
 
-    // CẤU HÌNH FILE (Thêm AREA là cột AL - index 37)
     const COL = {
         NPP: 2, NV: 6, THU: 11, STT_GHE: 12, LO_TRINH: 13, MA_KH: 14, TEN_KH: 15,
         TIME_IN: 19, TIME_OUT: 20, TIME_TOTAL: 21, DS_DON_HANG: 22, LAT: 30, LNG: 31, AREA: 37
@@ -412,8 +420,8 @@
     const selDay = document.getElementById('sel-day');
     const avatarImg = document.getElementById('avatar-img');
     const dashboard = document.getElementById('dashboard-section');
+    const btnDlWeek = document.getElementById('btn-dl-week'); // Nút tải ảnh tuần
 
-    // ================= LOAD DATA BẢO MẬT =================
     async function loadDataFromSupabase() {
         const btn = document.getElementById('btnLoadData');
         btn.disabled = true;
@@ -503,7 +511,6 @@
         }
     }
 
-    // ================= BỘ LỌC LIÊN KẾT (CASCADE FILTERS) =================
     function updateFilters() {
         let areas = [...new Set(rawRouteData.map(r => r[COL.AREA]))].filter(Boolean);
         selArea.innerHTML = `<option value="">${langData[curLang].optArea}</option>`;
@@ -513,11 +520,12 @@
         selNPP.innerHTML = `<option value="">${langData[curLang].optNPP}</option>`; selNPP.disabled = true;
         selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`; selNV.disabled = true;
         selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
+        btnDlWeek.disabled = true;
     }
 
     selArea.addEventListener('change', () => {
         const area = selArea.value;
-        if (!area) { resetDashboard(); selNPP.disabled = true; selNV.disabled = true; selDay.disabled = true; return; }
+        if (!area) { resetDashboard(); selNPP.disabled = true; selNV.disabled = true; selDay.disabled = true; btnDlWeek.disabled = true; return; }
         
         let npps = [...new Set(rawRouteData.filter(r => r[COL.AREA] === area).map(r => r[COL.NPP]))].filter(Boolean);
         selNPP.innerHTML = `<option value="">${langData[curLang].optNPP}</option>`;
@@ -526,12 +534,13 @@
         
         selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`; selNV.disabled = true;
         selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
+        btnDlWeek.disabled = true;
     });
 
     selNPP.addEventListener('change', () => {
         const area = selArea.value;
         const npp = selNPP.value;
-        if (!npp) { resetDashboard(); selNV.disabled = true; selDay.disabled = true; return; }
+        if (!npp) { resetDashboard(); selNV.disabled = true; selDay.disabled = true; btnDlWeek.disabled = true; return; }
         
         let nvs = [...new Set(rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp).map(r => r[COL.NV]))].filter(Boolean);
         selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`;
@@ -539,15 +548,17 @@
         selNV.disabled = false;
         
         selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
+        btnDlWeek.disabled = true;
     });
 
     selNV.addEventListener('change', () => {
         const area = selArea.value; 
         const npp = selNPP.value; 
         const nv = selNV.value; 
-        if (!nv) { resetDashboard(); selDay.disabled = true; return; }
+        if (!nv) { resetDashboard(); selDay.disabled = true; btnDlWeek.disabled = true; return; }
         
         avatarImg.src = `New folder/images/${nv}.PNG`;
+        btnDlWeek.disabled = false; // Bật nút Tải báo cáo tuần khi đã chọn NV
 
         let thus = [...new Set(rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp && r[COL.NV] === nv).map(r => r[COL.THU]))].filter(Boolean);
         thus.sort((a, b) => a.localeCompare(b));
@@ -629,7 +640,6 @@
         }
         document.getElementById('kpi-distance').innerText = `${formatNum(totalDist)} ${langData[curLang].unitKm}`;
         
-        // --- LOGIC TÍNH THỜI GIAN DI CHUYỂN TẠI ĐÂY ĐÃ ĐỔI THÀNH 20KM/H ---
         document.getElementById('kpi-moving-time').innerText = minutesToStr((totalDist / 20) * 60);
     }
 
@@ -695,8 +705,6 @@
 
             let timeIn = row[COL.TIME_IN] || ''; let timeOut = row[COL.TIME_OUT] || '';
             let timeAtKH = Math.max(0, timeStrToMinutes(timeOut) - timeStrToMinutes(timeIn));
-            
-            // --- LOGIC THỜI GIAN DI CHUYỂN TẠI BẢNG CŨNG ĐỔI THÀNH 20KM/H ---
             let moveTime = (distToNext / 20) * 60;
             
             totalKHTime += timeAtKH; totalMoveTime += moveTime;
@@ -749,6 +757,143 @@
         let tfRow = document.createElement('tr');
         tfRow.innerHTML = grandTotalHTML;
         tfoot.innerHTML = ''; tfoot.appendChild(tfRow);
+    }
+
+    // ================= TẢI BÁO CÁO TUẦN (CHỤP ẢNH) =================
+    async function downloadWeeklyReport() {
+        const area = selArea.value; const npp = selNPP.value; const nv = selNV.value;
+        if (!area || !npp || !nv) return;
+
+        btnDlWeek.disabled = true;
+        let originalText = btnDlWeek.innerText;
+        btnDlWeek.innerText = "⌛ Đang tạo ảnh...";
+
+        try {
+            // Lọc dữ liệu của nhân viên trong tất cả các ngày
+            let empData = rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp && r[COL.NV] === nv);
+            if (empData.length === 0) throw new Error("Không có dữ liệu!");
+
+            let days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+            let reportRows = [];
+            let totalVisited = 0, totalOrdered = 0, totalSales = 0, totalDistance = 0;
+
+            // Xử lý dữ liệu từng ngày
+            days.forEach(day => {
+                let dayData = empData.filter(r => r[COL.THU] === day);
+                if (dayData.length > 0) {
+                    dayData.sort((a, b) => parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]));
+                    
+                    let checkIn = dayData[0][COL.TIME_IN] || '--';
+                    let checkOut = dayData[dayData.length - 1][COL.TIME_OUT] || '--';
+                    
+                    let visited = dayData.length;
+                    let ordered = 0;
+                    let daySales = 0;
+                    let dayDist = 0;
+
+                    for(let i=0; i<dayData.length-1; i++) {
+                        dayDist += getHaversine14(dayData[i][COL.LAT], dayData[i][COL.LNG], dayData[i+1][COL.LAT], dayData[i+1][COL.LNG]);
+                    }
+
+                    dayData.forEach(r => {
+                        let dsDonHangStr = String(r[COL.DS_DON_HANG] || '').toUpperCase().trim();
+                        if(dsDonHangStr.includes('PO') && rawOrderData.length > 0) {
+                            ordered++;
+                            let listPO = dsDonHangStr.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
+                            listPO.forEach(po => {
+                                let orderRows = rawOrderData.filter(or => String(or[COL_EX2.MA_DON_HANG]).toUpperCase().trim() === po);
+                                orderRows.forEach(or => {
+                                    let valStr = String(or[COL_EX2.DOANH_SO]).replace(/,/g, '');
+                                    daySales += parseFloat(valStr) || 0;
+                                });
+                            });
+                        }
+                    });
+
+                    totalVisited += visited;
+                    totalOrdered += ordered;
+                    totalSales += daySales;
+                    totalDistance += dayDist;
+
+                    reportRows.push(`
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">${day}</td>
+                            <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center;">${checkIn}</td>
+                            <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center;">${checkOut}</td>
+                            <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #3b82f6;">${visited}</td>
+                            <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #f59e0b;">${ordered}</td>
+                            <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold; color: #16a34a;">${formatCurrency(daySales)}</td>
+                            <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right;">${formatNum(dayDist)} km</td>
+                        </tr>
+                    `);
+                }
+            });
+
+            // Tạo khung HTML ẩn chứa giao diện của Báo Cáo Tuần
+            let container = document.createElement('div');
+            container.style.position = 'absolute';
+            container.style.top = '-9999px';
+            container.style.left = '-9999px';
+            container.style.width = '900px';
+            container.style.backgroundColor = '#ffffff';
+            container.style.padding = '30px';
+            container.style.fontFamily = 'Arial, sans-serif';
+            container.style.color = '#0f172a';
+
+            container.innerHTML = `
+                <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #3b82f6; padding-bottom: 15px;">
+                    <h2 style="margin: 0; color: #1e40af; font-size: 24px; text-transform: uppercase;">Báo Cáo Tổng Hợp Tuần</h2>
+                    <p style="margin: 8px 0 0 0; font-size: 16px;">
+                        Khu vực: <b>${area}</b> &nbsp;|&nbsp; NPP: <b>${npp}</b> &nbsp;|&nbsp; Nhân viên: <b>${nv}</b>
+                    </p>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 15px;">
+                    <thead style="background-color: #f8fafc; color: #1e293b;">
+                        <tr>
+                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Ngày làm việc</th>
+                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Giờ Check-in</th>
+                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Giờ Check-out</th>
+                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Số KH viếng thăm</th>
+                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: center;">Số KH lên đơn</th>
+                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: right;">Tổng Doanh số</th>
+                            <th style="padding: 12px; border: 1px solid #cbd5e1; text-align: right;">Quãng đường</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${reportRows.join('')}
+                    </tbody>
+                    <tfoot style="background-color: #e2e8f0; font-size: 16px;">
+                        <tr>
+                            <td colspan="3" style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold; color: #0f172a;">TỔNG CỘNG TUẦN:</td>
+                            <td style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #2563eb;">${totalVisited}</td>
+                            <td style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #d97706;">${totalOrdered}</td>
+                            <td style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold; color: #15803d;">${formatCurrency(totalSales)}</td>
+                            <td style="padding: 15px 12px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold; color: #0369a1;">${formatNum(totalDistance)} km</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <div style="margin-top: 20px; font-size: 13px; color: #64748b; text-align: right; font-style: italic;">
+                    ${langData[curLang].lblTime || 'Trích xuất lúc: '} ${globalReportTime || new Date().toLocaleString('vi-VN')}
+                </div>
+            `;
+            
+            document.body.appendChild(container);
+
+            // Tiến hành chụp khung HTML thành ảnh PNG
+            let canvas = await html2canvas(container, { scale: 2 }); // Tỉ lệ 2 để ảnh nét hơn
+            let link = document.createElement('a');
+            link.download = `Bao_Cao_Tuan_${nv.replace(/\s+/g, '_')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            document.body.removeChild(container);
+        } catch (err) {
+            console.error("Lỗi tạo ảnh:", err);
+            alert("Có lỗi xảy ra khi tạo ảnh báo cáo!");
+        } finally {
+            btnDlWeek.innerText = originalText;
+            btnDlWeek.disabled = false;
+        }
     }
 
     // ================= CÁC HÀM TIỆN ÍCH =================
