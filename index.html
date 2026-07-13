@@ -208,12 +208,19 @@
             <div class="filters-wrapper">
                 <div class="filter-row">
                     <h3 data-i18n="filterTitle">Bộ Lọc</h3>
+                    <!-- Bộ lọc Khu vực mới -->
+                    <div class="filter-item">
+                        <label data-i18n="lblArea">Khu vực</label>
+                        <select id="sel-area" disabled><option value="" data-i18n="optArea">-- Chọn Khu vực --</option></select>
+                    </div>
                     <div class="filter-item">
                         <label data-i18n="lblNPP">Đơn vị PP</label>
                         <select id="sel-npp" disabled><option value="" data-i18n="optNPP">-- Chọn NPP --</option></select>
                     </div>
                 </div>
                 <div class="filter-row">
+                    <!-- Thẻ H3 trống để căn lề cho dòng thứ 2 -->
+                    <h3 style="min-width: 100px; margin: 0;"></h3>
                     <div class="filter-item">
                         <label data-i18n="lblNV">Nhân viên</label>
                         <select id="sel-nv" disabled><option value="" data-i18n="optNV">-- Chọn Nhân viên --</option></select>
@@ -271,7 +278,7 @@
                     <div class="kpi-value" id="kpi-distance">--</div>
                 </div>
                 <div class="kpi-box" style="border-color: #64748b;">
-                    <div class="kpi-title" data-i18n="kpiMoveTime">Thời gian di chuyển (v=35km/h)</div>
+                    <div class="kpi-title" data-i18n="kpiMoveTime">Thời gian di chuyển (v=20km/h)</div>
                     <div class="kpi-value" id="kpi-moving-time">--</div>
                 </div>
                 <div class="kpi-box" style="border-color: #94a3b8;">
@@ -299,35 +306,33 @@
             pageTitle: "Theo Dõi Đi Tuyến Nhân Viên", warningTitle: "Báo cáo chi tiết ghé thăm khách hàng",
             btnLoad: "📥 Tải Dữ Liệu", lblRoute: "1. Dữ liệu ghé thăm:", lblOrder: "2. Dữ liệu đơn hàng:",
             statusEmpty: "(Chưa tải)", statusLoading: "⌛ Đang xử lý...", statusDone: "✅ Đã tải xong", statusError: "❌ Lỗi tải file",
-            filterTitle: "Bộ Lọc", lblNPP: "Đơn vị PP", optNPP: "-- Chọn NPP --", lblNV: "Nhân viên", optNV: "-- Chọn Nhân viên --", lblDay: "Thứ (Day)", optDay: "-- Chọn Thứ --",
+            filterTitle: "Bộ Lọc", lblArea: "Khu vực", optArea: "-- Chọn Khu vực --", lblNPP: "Đơn vị PP", optNPP: "-- Chọn NPP --", lblNV: "Nhân viên", optNV: "-- Chọn Nhân viên --", lblDay: "Thứ (Day)", optDay: "-- Chọn Thứ --",
             kpiHeader: "📊 Bảng Tổng Hợp Tuyến Đường", kpiCheckin: "Giờ Check-in (KH đầu tiên)", kpiCheckout: "Giờ Check-out (KH cuối cùng)", kpiTotalTime: "Tổng thời gian làm việc",
             kpiTotalVisit: "Số KH đã ghé thăm (Tổng)", kpiInRoute: "Trong tuyến ghé:", kpiOutRoute: "Ngoài tuyến ghé:", kpiOrdered: "Số KH lên đơn thành công", kpiWorkTime: "Thời gian làm việc với KH",
-            kpiDist: "Tổng quãng đường", kpiMoveTime: "Thời gian di chuyển", kpiRest: "Thời gian nghỉ trưa", valRest: "1 giờ 0 phút",
+            kpiDist: "Tổng quãng đường", kpiMoveTime: "Thời gian di chuyển (v=20km/h)", kpiRest: "Thời gian nghỉ trưa", valRest: "1 giờ 0 phút",
             tableTitle: "📋 Chi Tiết Ghé Thăm & Doanh Số", thCode: "Mã KH", thName: "Tên KH", thStart: "Thời điểm Bắt đầu", thEnd: "Thời điểm Kết thúc", thDist: "Khoảng cách đến KH kế tiếp (km)", thTimeAt: "Thời gian làm việc tại KH (phút)", thTimeMove: "Thời gian Di chuyển đến KH kế tiếp (phút)",
             thSalesCat: "Doanh số theo ngành hàng", thSalesTotal: "Tổng doanh số", thDS: "DS ", thGrandTotal: "GRAND TOTAL",
             unitHour: "giờ", unitMinute: "phút", unitKm: "km", alertNoRoute: "Không tìm thấy lộ trình phù hợp!",
-            lblTime: "Thời gian: " // Thêm nhãn tiếng Việt
+            lblTime: "Thời gian: " 
         },
         en: {
             pageTitle: "Employee Route Tracking", warningTitle: "Customer Visit Detail Report",
             btnLoad: "📥 Load Data", lblRoute: "1. Visit Data:", lblOrder: "2. Order Data:",
             statusEmpty: "(Not loaded)", statusLoading: "⌛ Loading...", statusDone: "✅ Done", statusError: "❌ Fetch Error",
-            filterTitle: "Filters", lblNPP: "Distributor", optNPP: "-- Select Distributor --", lblNV: "Employee", optNV: "-- Select Employee --", lblDay: "Day", optDay: "-- Select Day --",
+            filterTitle: "Filters", lblArea: "Area", optArea: "-- Select Area --", lblNPP: "Distributor", optNPP: "-- Select Distributor --", lblNV: "Employee", optNV: "-- Select Employee --", lblDay: "Day", optDay: "-- Select Day --",
             kpiHeader: "📊 Route Summary Dashboard", kpiCheckin: "Check-in Time (First store)", kpiCheckout: "Check-out Time (Last store)", kpiTotalTime: "Total Working Time",
             kpiTotalVisit: "Total Visited Customers", kpiInRoute: "In-route:", kpiOutRoute: "Out-of-route:", kpiOrdered: "Successful Cus Ordered", kpiWorkTime: "Time spent with Customers",
-            kpiDist: "Total Distance", kpiMoveTime: "Moving Time", kpiRest: "Lunch Break", valRest: "1 hour 0 minutes",
+            kpiDist: "Total Distance", kpiMoveTime: "Moving Time (v=20km/h)", kpiRest: "Lunch Break", valRest: "1 hour 0 minutes",
             tableTitle: "📋 Visit & Sales Details", thCode: "Cust. Code", thName: "Cust. Name", thStart: "Start", thEnd: "End", thDist: "Distance to next customer (km)", thTimeAt: "Time at store (mins)", thTimeMove: "Moving time to next cus (mins)",
             thSalesCat: "Sales by Category", thSalesTotal: "Total Sales", thDS: "Sales ", thGrandTotal: "GRAND TOTAL",
             unitHour: "hrs", unitMinute: "mins", unitKm: "km", alertNoRoute: "No matching route found!",
-            lblTime: "Time: " // Thêm nhãn tiếng Anh
+            lblTime: "Time: "
         }
     };
 
     let curLang = 'vi';
-    let globalReportTime = ""; // Biến toàn cục lưu giá trị ô E2 lấy từ Excel
+    let globalReportTime = ""; 
 
-    // Trạng thái tải dữ liệu được theo dõi riêng biệt cho từng file
-    // ('idle' | 'loading' | 'done' | 'error')
     let loadStatus = { route: 'idle', order: 'idle' };
 
     function renderStatusBadge(elId, statusKey) {
@@ -359,13 +364,13 @@
             if (langData[curLang][key]) el.innerHTML = langData[curLang][key];
         });
 
+        if (!selArea.value && selArea.options.length > 0) selArea.options[0].text = langData[curLang].optArea;
         if (!selNPP.value && selNPP.options.length > 0) selNPP.options[0].text = langData[curLang].optNPP;
         if (!selNV.value && selNV.options.length > 0) selNV.options[0].text = langData[curLang].optNV;
         if (!selDay.value && selDay.options.length > 0) selDay.options[0].text = langData[curLang].optDay;
 
         refreshStatusBadges();
 
-        // Cập nhật text hiển thị thời gian khi đổi ngôn ngữ
         if (globalReportTime) {
             document.getElementById('report-time').innerText = langData[curLang].lblTime + globalReportTime;
         }
@@ -384,10 +389,10 @@
     const FILE_ORDER = 'dh.xlsx';
     const HUB_URL = 'https://nguyen842-ai.github.io/Tong-hop-bao-cao/';
 
-    // CẤU HÌNH FILE
+    // CẤU HÌNH FILE (Thêm AREA là cột AL - index 37)
     const COL = {
         NPP: 2, NV: 6, THU: 11, STT_GHE: 12, LO_TRINH: 13, MA_KH: 14, TEN_KH: 15,
-        TIME_IN: 19, TIME_OUT: 20, TIME_TOTAL: 21, DS_DON_HANG: 22, LAT: 30, LNG: 31
+        TIME_IN: 19, TIME_OUT: 20, TIME_TOTAL: 21, DS_DON_HANG: 22, LAT: 30, LNG: 31, AREA: 37
     };
     let COL_EX2 = { MA_DON_HANG: 16, NGANH_HANG: 39, DOANH_SO: 34 };
 
@@ -401,8 +406,9 @@
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
     let routeLayer = L.layerGroup().addTo(map);
 
-    const selNV = document.getElementById('sel-nv');
+    const selArea = document.getElementById('sel-area');
     const selNPP = document.getElementById('sel-npp');
+    const selNV = document.getElementById('sel-nv');
     const selDay = document.getElementById('sel-day');
     const avatarImg = document.getElementById('avatar-img');
     const dashboard = document.getElementById('dashboard-section');
@@ -417,7 +423,6 @@
         refreshStatusBadges();
 
         try {
-            // 1. Kiểm tra Session đăng nhập
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) {
                 alert("Phiên làm việc hết hạn hoặc chưa đăng nhập. Đang chuyển về Trang Hub...");
@@ -425,7 +430,6 @@
                 return;
             }
 
-            // 2. Lấy link bảo mật cho 2 file Excel
             const { data: signedUrls, error } = await supabaseClient.storage
                 .from(BUCKET_NAME)
                 .createSignedUrls([FILE_ROUTE, FILE_ORDER], 60);
@@ -437,35 +441,29 @@
             const urlRouteSigned = signedUrls.find(u => u.path === FILE_ROUTE).signedUrl;
             const urlOrderSigned = signedUrls.find(u => u.path === FILE_ORDER).signedUrl;
 
-            // 3. Tải và đọc file Excel thứ nhất (ROUTE)
             let resRoute = await fetch(urlRouteSigned);
             if (!resRoute.ok) throw new Error("Lỗi tải file Route");
             let arrRoute = await resRoute.arrayBuffer();
             let wbRoute = XLSX.read(arrRoute, {type: 'array'});
             let jsonRoute = XLSX.utils.sheet_to_json(wbRoute.Sheets[wbRoute.SheetNames[0]], {header: 1});
             
-            // --- XỬ LÝ ĐỂ LẤY Ô E2 TRONG FILE MAP ---
-            // Ô E2 tương ứng dòng index 1, cột index 4 trong mảng 2 chiều
             if (jsonRoute.length > 1 && jsonRoute[1][4] !== undefined) {
                 globalReportTime = jsonRoute[1][4];
                 document.getElementById('report-time').innerText = langData[curLang].lblTime + globalReportTime;
             } else {
                 document.getElementById('report-time').innerText = "";
             }
-            // ----------------------------------------
 
-            rawRouteData = jsonRoute.filter(row => row[COL.NPP] && row[COL.NV] && !isNaN(parseInt(row[0])));
+            rawRouteData = jsonRoute.filter(row => row[COL.AREA] && row[COL.NPP] && row[COL.NV] && !isNaN(parseInt(row[0])));
             loadStatus.route = 'done';
             refreshStatusBadges();
 
-            // 4. Tải và đọc file Excel thứ hai (ORDER)
             let resOrder = await fetch(urlOrderSigned);
             if (!resOrder.ok) throw new Error("Lỗi tải file Order");
             let arrOrder = await resOrder.arrayBuffer();
             let wbOrder = XLSX.read(arrOrder, {type: 'array'});
             rawOrderData = XLSX.utils.sheet_to_json(wbOrder.Sheets[wbOrder.SheetNames[0]], {header: 1});
             
-            // Auto-detect cột Đơn hàng
             let colPO = -1, colCat = -1, colSales = -1;
             for (let i = 0; i < Math.min(100, rawOrderData.length); i++) {
                 let row = rawOrderData[i];
@@ -491,7 +489,6 @@
             loadStatus.order = 'done';
             refreshStatusBadges();
             
-            // Update UI
             updateFilters();
             if(selDay.value) processDataAndRender();
 
@@ -506,32 +503,53 @@
         }
     }
 
-    // ================= BỘ LỌC =================
+    // ================= BỘ LỌC LIÊN KẾT (CASCADE FILTERS) =================
     function updateFilters() {
-        let npps = [...new Set(rawRouteData.map(r => r[COL.NPP]))].filter(Boolean);
-        selNPP.innerHTML = `<option value="">${langData[curLang].optNPP}</option>`;
-        npps.forEach(npp => selNPP.innerHTML += `<option value="${npp}">${npp}</option>`);
-        selNPP.disabled = false;
+        let areas = [...new Set(rawRouteData.map(r => r[COL.AREA]))].filter(Boolean);
+        selArea.innerHTML = `<option value="">${langData[curLang].optArea}</option>`;
+        areas.forEach(area => selArea.innerHTML += `<option value="${area}">${area}</option>`);
+        selArea.disabled = false;
+        
+        selNPP.innerHTML = `<option value="">${langData[curLang].optNPP}</option>`; selNPP.disabled = true;
         selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`; selNV.disabled = true;
         selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
     }
 
+    selArea.addEventListener('change', () => {
+        const area = selArea.value;
+        if (!area) { resetDashboard(); selNPP.disabled = true; selNV.disabled = true; selDay.disabled = true; return; }
+        
+        let npps = [...new Set(rawRouteData.filter(r => r[COL.AREA] === area).map(r => r[COL.NPP]))].filter(Boolean);
+        selNPP.innerHTML = `<option value="">${langData[curLang].optNPP}</option>`;
+        npps.forEach(npp => selNPP.innerHTML += `<option value="${npp}">${npp}</option>`);
+        selNPP.disabled = false;
+        
+        selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`; selNV.disabled = true;
+        selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
+    });
+
     selNPP.addEventListener('change', () => {
+        const area = selArea.value;
         const npp = selNPP.value;
-        if (!npp) { resetDashboard(); return; }
-        let nvs = [...new Set(rawRouteData.filter(r => r[COL.NPP] === npp).map(r => r[COL.NV]))].filter(Boolean);
+        if (!npp) { resetDashboard(); selNV.disabled = true; selDay.disabled = true; return; }
+        
+        let nvs = [...new Set(rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp).map(r => r[COL.NV]))].filter(Boolean);
         selNV.innerHTML = `<option value="">${langData[curLang].optNV}</option>`;
         nvs.forEach(nv => selNV.innerHTML += `<option value="${nv}">${nv}</option>`);
         selNV.disabled = false;
+        
         selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`; selDay.disabled = true;
     });
 
     selNV.addEventListener('change', () => {
-        const nv = selNV.value; const npp = selNPP.value;
-        if (!nv) { resetDashboard(); return; }
+        const area = selArea.value; 
+        const npp = selNPP.value; 
+        const nv = selNV.value; 
+        if (!nv) { resetDashboard(); selDay.disabled = true; return; }
+        
         avatarImg.src = `New folder/images/${nv}.PNG`;
 
-        let thus = [...new Set(rawRouteData.filter(r => r[COL.NPP] === npp && r[COL.NV] === nv).map(r => r[COL.THU]))].filter(Boolean);
+        let thus = [...new Set(rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp && r[COL.NV] === nv).map(r => r[COL.THU]))].filter(Boolean);
         thus.sort((a, b) => a.localeCompare(b));
         selDay.innerHTML = `<option value="">${langData[curLang].optDay}</option>`;
         thus.forEach(thu => selDay.innerHTML += `<option value="${thu}">${thu}</option>`);
@@ -542,10 +560,10 @@
 
     // ================= MAIN RENDER =================
     function processDataAndRender() {
-        const nv = selNV.value; const npp = selNPP.value; const day = selDay.value;
-        if (!nv || !npp || !day) return;
+        const area = selArea.value; const npp = selNPP.value; const nv = selNV.value; const day = selDay.value;
+        if (!area || !npp || !nv || !day) return;
 
-        let currentRoute = rawRouteData.filter(r => r[COL.NV] === nv && r[COL.NPP] === npp && r[COL.THU] === day);
+        let currentRoute = rawRouteData.filter(r => r[COL.AREA] === area && r[COL.NPP] === npp && r[COL.NV] === nv && r[COL.THU] === day);
         currentRoute.sort((a, b) => parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]));
 
         if (currentRoute.length === 0) return alert(langData[curLang].alertNoRoute);
@@ -610,7 +628,9 @@
             totalDist += getHaversine14(data[i][COL.LAT], data[i][COL.LNG], data[i+1][COL.LAT], data[i+1][COL.LNG]);
         }
         document.getElementById('kpi-distance').innerText = `${formatNum(totalDist)} ${langData[curLang].unitKm}`;
-        document.getElementById('kpi-moving-time').innerText = minutesToStr((totalDist / 35) * 60);
+        
+        // --- LOGIC TÍNH THỜI GIAN DI CHUYỂN TẠI ĐÂY ĐÃ ĐỔI THÀNH 20KM/H ---
+        document.getElementById('kpi-moving-time').innerText = minutesToStr((totalDist / 20) * 60);
     }
 
     function renderDetailTable(data) {
@@ -675,7 +695,9 @@
 
             let timeIn = row[COL.TIME_IN] || ''; let timeOut = row[COL.TIME_OUT] || '';
             let timeAtKH = Math.max(0, timeStrToMinutes(timeOut) - timeStrToMinutes(timeIn));
-            let moveTime = (distToNext / 35) * 60;
+            
+            // --- LOGIC THỜI GIAN DI CHUYỂN TẠI BẢNG CŨNG ĐỔI THÀNH 20KM/H ---
+            let moveTime = (distToNext / 20) * 60;
             
             totalKHTime += timeAtKH; totalMoveTime += moveTime;
 
