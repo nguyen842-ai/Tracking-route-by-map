@@ -313,10 +313,10 @@
             kpiHeader: "📊 Bảng Tổng Hợp Tuyến Đường", kpiCheckin: "Giờ Check-in (Thực tế)", kpiCheckout: "Giờ Check-out (Thực tế)", kpiTotalTime: "Tổng thời gian làm việc",
             kpiTotalVisit: "Số KH đã ghé thăm (Tổng)", kpiInRoute: "Trong tuyến:", kpiOutRoute: "Ngoại tuyến:", kpiOrdered: "Số KH lên đơn thành công", kpiWorkTime: "Thời gian làm việc với KH",
             kpiDist: "Tổng quãng đường", kpiMoveTime: "Thời gian di chuyển (v=20km/h)", kpiRest: "Thời gian nghỉ trưa", 
-            tableTitle: "📋 Chi Tiết Ghé Thăm & Doanh Số", thDay: "Ngày (Thứ)", thCode: "Mã KH", thName: "Tên KH", thStart: "Thời điểm Bắt đầu", thEnd: "Thời điểm Kết thúc", thDist: "Khoảng cách đến KH kế tiếp (km)", thTimeAt: "Thời gian làm việc tại KH (phút)", thTimeMove: "Thời gian Di chuyển đến KH kế tiếp (phút)",
+            tableTitle: "📋 Chi Tiết Ghé Thăm & Doanh Số", thDay: "Ngày (Thứ)", thCode: "Mã KH", thName: "Tên KH", thRouteType: "Loại Tuyến", thStart: "Thời điểm Bắt đầu", thEnd: "Thời điểm Kết thúc", thDist: "Khoảng cách đến KH kế tiếp (km)", thTimeAt: "Thời gian làm việc tại KH (phút)", thTimeMove: "Thời gian Di chuyển đến KH kế tiếp (phút)",
             thSalesCat: "Doanh số theo ngành hàng", thSalesTotal: "Tổng doanh số", thDS: "DS ", thGrandTotal: "GRAND TOTAL",
             unitHour: "giờ", unitMinute: "phút", unitKm: "km", alertNoRoute: "Không tìm thấy lộ trình phù hợp!",
-            lblTime: "Thời gian: ", lblAll: "Tất cả", multiDays: "Nhiều ngày"
+            lblTime: "Thời gian: ", lblAll: "Tất cả", multiDays: "Nhiều ngày", valIn: "Trong tuyến", valOut: "Ngoại tuyến"
         },
         en: {
             pageTitle: "Employee Route Tracking", warningTitle: "Customer Visit Detail Report",
@@ -327,10 +327,10 @@
             kpiHeader: "📊 Route Summary Dashboard", kpiCheckin: "Check-in Time (Actual)", kpiCheckout: "Check-out Time (Actual)", kpiTotalTime: "Total Working Time",
             kpiTotalVisit: "Total Visited Customers", kpiInRoute: "In-route:", kpiOutRoute: "Out-of-route:", kpiOrdered: "Successful Cus Ordered", kpiWorkTime: "Time spent with Customers",
             kpiDist: "Total Distance", kpiMoveTime: "Moving Time (v=20km/h)", kpiRest: "Lunch Break", 
-            tableTitle: "📋 Visit & Sales Details", thDay: "Day", thCode: "Cust. Code", thName: "Cust. Name", thStart: "Start", thEnd: "End", thDist: "Distance to next customer (km)", thTimeAt: "Time at store (mins)", thTimeMove: "Moving time to next cus (mins)",
+            tableTitle: "📋 Visit & Sales Details", thDay: "Day", thCode: "Cust. Code", thName: "Cust. Name", thRouteType: "Route Type", thStart: "Start", thEnd: "End", thDist: "Distance to next customer (km)", thTimeAt: "Time at store (mins)", thTimeMove: "Moving time to next cus (mins)",
             thSalesCat: "Sales by Category", thSalesTotal: "Total Sales", thDS: "Sales ", thGrandTotal: "GRAND TOTAL",
             unitHour: "hrs", unitMinute: "mins", unitKm: "km", alertNoRoute: "No matching route found!",
-            lblTime: "Time: ", lblAll: "All", multiDays: "Multiple days"
+            lblTime: "Time: ", lblAll: "All", multiDays: "Multiple days", valIn: "In-route", valOut: "Out-of-route"
         }
     };
 
@@ -626,7 +626,6 @@
         currentRoute.sort((a, b) => {
             let dayDiff = (order[a[COL.THU]]||99) - (order[b[COL.THU]]||99);
             if (dayDiff !== 0) return dayDiff;
-            // CHỈNH SỬA: Sắp xếp thời gian tuyến tính dựa trên TIME_IN (cột T - index 19)
             return timeStrToMinutes(a[COL.TIME_IN]) - timeStrToMinutes(b[COL.TIME_IN]);
         });
 
@@ -648,8 +647,7 @@
             
             dayData.forEach((row, index) => {
                 let lat = parseFloat(row[COL.LAT]); let lng = parseFloat(row[COL.LNG]); 
-                // CHỈNH SỬA: Gán STT dựa trên thứ tự thực tế về mặt thời gian (index + 1)
-                let stt = index + 1;
+                let stt = index + 1; 
                 
                 if (!isNaN(lat) && !isNaN(lng)) {
                     dayLatLngs.push([lat, lng]);
@@ -711,7 +709,6 @@
                 displayCheckout = dayCheckOut;
             }
 
-            // CHỈNH SỬA: Sắp xếp theo TIME_IN trước khi tính toán quãng đường
             dayData.sort((a, b) => timeStrToMinutes(a[COL.TIME_IN]) - timeStrToMinutes(b[COL.TIME_IN]));
             for(let i = 0; i < dayData.length - 1; i++) {
                 totalDist += getHaversine14(dayData[i][COL.LAT], dayData[i][COL.LNG], dayData[i+1][COL.LAT], dayData[i+1][COL.LNG]);
@@ -725,7 +722,6 @@
         data.forEach(r => {
             let loTrinh = (r[COL.LO_TRINH] || '').toString().toLowerCase();
             
-            // LOGIC MỚI: Chỉ cần có "trong" thì là Trong Tuyến. Mọi trường hợp còn lại -> Ngoại Tuyến.
             if(loTrinh.includes('trong') || loTrinh.includes('in')) {
                 inRouteCount++;
             } else {
@@ -780,10 +776,12 @@
         activeCategories = categoryList.filter(cat => categoryHasSalesMap[cat] === true);
 
         let lang = langData[curLang];
+        // Bổ sung cột "Loại Tuyến" vào Bảng Chi Tiết
         let row1_HTML = `
             <th rowspan="2" class="route-th">${lang.thDay}</th>
             <th rowspan="2" class="route-th">${lang.thCode}</th>
             <th rowspan="2" class="route-th">${lang.thName}</th>
+            <th rowspan="2" class="route-th">${lang.thRouteType}</th> 
             <th rowspan="2" class="route-th">${lang.thStart}</th>
             <th rowspan="2" class="route-th">${lang.thEnd}</th>
             <th rowspan="2" class="route-th num-right">${lang.thDist}</th>
@@ -840,10 +838,18 @@
                 });
             }
 
+            // Logic phân loại Trong tuyến / Ngoại tuyến
+            let loTrinhText = (row[COL.LO_TRINH] || '').toString().toLowerCase();
+            let isTrongTuyen = loTrinhText.includes('trong') || loTrinhText.includes('in');
+            let routeLabel = isTrongTuyen 
+                ? `<span style="color:#16a34a; font-weight:bold;">${lang.valIn}</span>` 
+                : `<span style="color:#f59e0b; font-weight:bold;">${lang.valOut}</span>`;
+
             let rowHTML = `
                 <td style="font-weight:bold; color: ${colorMap[row[COL.THU]] || '#475569'};">${row[COL.THU] || ''}</td>
                 <td>${row[COL.MA_KH] || ''}</td>
                 <td>${row[COL.TEN_KH] || ''}</td>
+                <td style="text-align: center;">${routeLabel}</td>
                 <td>${timeIn}</td>
                 <td>${timeOut}</td>
                 <td class="num-right">${formatNum(distToNext)}</td>
@@ -857,8 +863,9 @@
             tbody.appendChild(tr);
         });
 
+        // Điều chỉnh lại colspan từ 5 thành 6 vì đã chèn thêm cột Loại Tuyến
         let grandTotalHTML = `
-            <td colspan="5" style="text-align:right; font-size:14px;"><b>${lang.thGrandTotal}</b></td>
+            <td colspan="6" style="text-align:right; font-size:14px;"><b>${lang.thGrandTotal}</b></td>
             <td class="num-right" style="color:#1e40af; font-size:14px;"><b>${formatNum(totalDist)} ${lang.unitKm}</b></td>
             <td class="num-right" style="color:#ec4899; font-size:14px;"><b>${minutesToStr(totalKHTime)}</b></td>
             <td class="num-right" style="color:#64748b; font-size:14px;"><b>${minutesToStr(totalMoveTime)}</b></td>
@@ -909,7 +916,6 @@
                         if (tOut > 0 && tOut > maxOut) { maxOut = tOut; checkOut = tOutStr; }
                     });
 
-                    // CHỈNH SỬA: Sắp xếp theo TIME_IN
                     dayData.sort((a, b) => timeStrToMinutes(a[COL.TIME_IN]) - timeStrToMinutes(b[COL.TIME_IN]));
                     
                     let visited = dayData.length;
@@ -1035,16 +1041,13 @@
             days.forEach(day => {
                 let dayData = empData.filter(r => r[COL.THU] === day);
                 if (dayData.length > 0) {
-                    
-                    // CHỈNH SỬA: Sắp xếp theo TIME_IN để vẽ và đánh số
                     dayData.sort((a, b) => timeStrToMinutes(a[COL.TIME_IN]) - timeStrToMinutes(b[COL.TIME_IN]));
-                    
                     let color = colorMap[day] || '#3b82f6';
                     let dayLatLngs = [];
                     
                     dayData.forEach((row, index) => {
                         let lat = parseFloat(row[COL.LAT]); let lng = parseFloat(row[COL.LNG]); 
-                        let stt = index + 1; // Số thứ tự động dựa theo thời gian
+                        let stt = index + 1; 
                         
                         if (!isNaN(lat) && !isNaN(lng)) {
                             let ll = [lat, lng];
