@@ -626,7 +626,8 @@
         currentRoute.sort((a, b) => {
             let dayDiff = (order[a[COL.THU]]||99) - (order[b[COL.THU]]||99);
             if (dayDiff !== 0) return dayDiff;
-            return parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]);
+            // CHỈNH SỬA: Sắp xếp thời gian tuyến tính dựa trên TIME_IN (cột T - index 19)
+            return timeStrToMinutes(a[COL.TIME_IN]) - timeStrToMinutes(b[COL.TIME_IN]);
         });
 
         drawMap(currentRoute);
@@ -645,8 +646,11 @@
             let color = colorMap[day] || '#3b82f6';
             let dayLatLngs = [];
             
-            dayData.forEach((row) => {
-                let lat = parseFloat(row[COL.LAT]); let lng = parseFloat(row[COL.LNG]); let stt = row[COL.STT_GHE];
+            dayData.forEach((row, index) => {
+                let lat = parseFloat(row[COL.LAT]); let lng = parseFloat(row[COL.LNG]); 
+                // CHỈNH SỬA: Gán STT dựa trên thứ tự thực tế về mặt thời gian (index + 1)
+                let stt = index + 1;
+                
                 if (!isNaN(lat) && !isNaN(lng)) {
                     dayLatLngs.push([lat, lng]);
                     allLatLngs.push([lat, lng]);
@@ -707,7 +711,8 @@
                 displayCheckout = dayCheckOut;
             }
 
-            dayData.sort((a, b) => parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]));
+            // CHỈNH SỬA: Sắp xếp theo TIME_IN trước khi tính toán quãng đường
+            dayData.sort((a, b) => timeStrToMinutes(a[COL.TIME_IN]) - timeStrToMinutes(b[COL.TIME_IN]));
             for(let i = 0; i < dayData.length - 1; i++) {
                 totalDist += getHaversine14(dayData[i][COL.LAT], dayData[i][COL.LNG], dayData[i+1][COL.LAT], dayData[i+1][COL.LNG]);
             }
@@ -904,7 +909,8 @@
                         if (tOut > 0 && tOut > maxOut) { maxOut = tOut; checkOut = tOutStr; }
                     });
 
-                    dayData.sort((a, b) => parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]));
+                    // CHỈNH SỬA: Sắp xếp theo TIME_IN
+                    dayData.sort((a, b) => timeStrToMinutes(a[COL.TIME_IN]) - timeStrToMinutes(b[COL.TIME_IN]));
                     
                     let visited = dayData.length;
                     let ordered = 0;
@@ -1029,12 +1035,17 @@
             days.forEach(day => {
                 let dayData = empData.filter(r => r[COL.THU] === day);
                 if (dayData.length > 0) {
-                    dayData.sort((a, b) => parseInt(a[COL.STT_GHE]) - parseInt(b[COL.STT_GHE]));
+                    
+                    // CHỈNH SỬA: Sắp xếp theo TIME_IN để vẽ và đánh số
+                    dayData.sort((a, b) => timeStrToMinutes(a[COL.TIME_IN]) - timeStrToMinutes(b[COL.TIME_IN]));
+                    
                     let color = colorMap[day] || '#3b82f6';
                     let dayLatLngs = [];
                     
-                    dayData.forEach((row) => {
-                        let lat = parseFloat(row[COL.LAT]); let lng = parseFloat(row[COL.LNG]); let stt = row[COL.STT_GHE];
+                    dayData.forEach((row, index) => {
+                        let lat = parseFloat(row[COL.LAT]); let lng = parseFloat(row[COL.LNG]); 
+                        let stt = index + 1; // Số thứ tự động dựa theo thời gian
+                        
                         if (!isNaN(lat) && !isNaN(lng)) {
                             let ll = [lat, lng];
                             dayLatLngs.push(ll);
