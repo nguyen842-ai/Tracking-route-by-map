@@ -409,8 +409,10 @@
     let rawRouteData = []; let rawOrderData = []; let categoryList = []; 
 
     const map = L.map('map').setView([10.8231, 106.6297], 10);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
-    let routeLayer = L.layerGroup().addTo(map);
+   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19,
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+}).addTo(map);
 
     const selArea = document.getElementById('sel-area');
     const selNPP = document.getElementById('sel-npp');
