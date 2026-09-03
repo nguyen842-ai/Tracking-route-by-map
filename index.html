@@ -410,14 +410,19 @@
 
     const map = L.map('map').setView([10.8231, 106.6297], 10);
     L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_2tyt_1_afa9eaf789f617b22b57e86b').addTo(map);
-
+    const routeLayer = L.featureGroup().addTo(map);
     const selArea = document.getElementById('sel-area');
     const selNPP = document.getElementById('sel-npp');
     const selNV = document.getElementById('sel-nv');
     const dashboard = document.getElementById('dashboard-section');
     const btnDlWeek = document.getElementById('btn-dl-week'); 
     const btnDlMapWeek = document.getElementById('btn-dl-map-week');
-
+    function resetDashboard() {
+        dashboard.style.display = 'none'; // Ẩn dashboard
+        if (routeLayer) {
+            routeLayer.clearLayers(); // Xóa các điểm trên bản đồ
+        }
+    }
     async function loadDataFromSupabase() {
         const btn = document.getElementById('btnLoadData');
         btn.disabled = true;
