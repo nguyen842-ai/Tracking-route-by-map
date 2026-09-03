@@ -489,9 +489,9 @@
                 if(!row) continue;
                 for (let j = 0; j < row.length; j++) {
                     let cellVal = String(row[j] || '').toLowerCase().replace(/\s+/g, ' ').trim();
-                    if (cellVal.includes('MÃ ĐƠN ĐẶT HÀNG')) colPO = j;
-                    if (cellVal.includes('NGÀNH HÀNG')) colCat = j;
-                    if (cellVal.includes('CHƯA VAT')) colSales = j;
+                    if (cellVal.includes('mã đơn đặt hàng')) colPO = j;
+                    if (cellVal.includes('ngành hàng')) colCat = j;
+                    if (cellVal.includes('chưa vat')) colSales = j;
                 }
             }
 
